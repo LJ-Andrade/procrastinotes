@@ -1,9 +1,21 @@
 import { useEffect, useRef } from "react";
 
+interface Particle {
+  x: number;
+  y: number;
+  r: number;
+  vx: number; // px per ms, rightward (wind)
+  vy: number; // px per ms, slight upward
+  a: number; // alpha
+}
+
+const COLOR = "#5b8fd6"; // soft blue, reads on light and dark
+const MAX = 70;
+
 /**
- * Optional ambient layer: a few slow, faint particles drifting upward over the
- * UI. Purely decorative, pointer-events disabled, and off by default — it sits
- * below modals so it never gets in the way.
+ * Optional ambient layer: faint blue dots drifting left-to-right as if carried
+ * by the wind, with a slight upward drift. They arrive in occasional gusts
+ * rather than constantly. Decorative, pointer-events disabled, below modals.
  */
 export function Ambient() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -29,42 +41,55 @@ export function Ambient() {
     resize();
     window.addEventListener("resize", resize);
 
-    const particles = Array.from({ length: 34 }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      r: Math.random() * 1.6 + 0.5,
-      vy: -(Math.random() * 0.22 + 0.04),
-      vx: (Math.random() - 0.5) * 0.12,
-      a: Math.random() * 0.35 + 0.08,
-    }));
+    const particles: Particle[] = [];
 
-    const accent =
-      getComputedStyle(document.documentElement)
-        .getPropertyValue("--accent")
-        .trim() || "#b08968";
+    function spawn() {
+      if (particles.length >= MAX) return;
+      particles.push({
+        x: -10,
+        y: Math.random() * h,
+        r: Math.random() * 1.6 + 0.8,
+        vx: Math.random() * 0.07 + 0.04, // 40–110 px/s rightward
+        vy: -(Math.random() * 0.012 + 0.004), // gentle upward
+        a: Math.random() * 0.35 + 0.12,
+      });
+    }
 
+    let last = performance.now();
+    let nextGust = 0;
     let raf = 0;
-    function frame() {
+
+    function frame(now: number) {
+      const dt = Math.min(now - last, 64);
+      last = now;
+
+      // Occasional gusts of a few particles.
+      nextGust -= dt;
+      if (nextGust <= 0) {
+        const count = 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < count; i++) spawn();
+        nextGust = 500 + Math.random() * 2200;
+      }
+
       ctx!.clearRect(0, 0, w, h);
-      for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.y < -5) {
-          p.y = h + 5;
-          p.x = Math.random() * w;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        if (p.x > w + 12 || p.y < -12) {
+          particles.splice(i, 1);
+          continue;
         }
-        if (p.x < -5) p.x = w + 5;
-        if (p.x > w + 5) p.x = -5;
         ctx!.beginPath();
         ctx!.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx!.globalAlpha = p.a;
-        ctx!.fillStyle = accent;
+        ctx!.fillStyle = COLOR;
         ctx!.fill();
       }
       ctx!.globalAlpha = 1;
       raf = requestAnimationFrame(frame);
     }
-    frame();
+    raf = requestAnimationFrame(frame);
 
     return () => {
       cancelAnimationFrame(raf);
