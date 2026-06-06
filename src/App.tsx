@@ -4,11 +4,24 @@ import { Editor, type EditorChange } from "./editor/Editor";
 import { TitleBar } from "./TitleBar";
 import { PreferencesModal } from "./PreferencesModal";
 import { CommandPalette } from "./CommandPalette";
+import { ShortcutsHelp } from "./ShortcutsHelp";
 import { usePreferences } from "./preferences";
 import type { Page, Project, Section } from "./types";
 import "./App.css";
 
 const AUTOSAVE_DELAY = 600;
+
+/** True when the event target is an editable element (input/editor), so global
+    single-key shortcuts like "?" don't fire while the user is typing. */
+function isTyping(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  return (
+    !!el &&
+    (el.tagName === "INPUT" ||
+      el.tagName === "TEXTAREA" ||
+      el.isContentEditable)
+  );
+}
 
 function App() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -27,6 +40,7 @@ function App() {
   const { prefs, update: updatePrefs } = usePreferences();
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   // Bumped to ask the editor to take focus (used by quick capture).
   const [focusSignal, setFocusSignal] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
@@ -62,9 +76,13 @@ function App() {
       } else if (e.ctrlKey && e.key === ",") {
         e.preventDefault();
         setPrefsOpen(true);
+      } else if (e.key === "?" && !isTyping(e.target)) {
+        e.preventDefault();
+        setHelpOpen(true);
       } else if (e.key === "Escape") {
         setPrefsOpen(false);
         setCommandOpen(false);
+        setHelpOpen(false);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -336,9 +354,14 @@ function App() {
           onNavigate={navigateTo}
           onCreatePage={addPage}
           onCreateProject={addProject}
+          onShowShortcuts={() => {
+            setCommandOpen(false);
+            setHelpOpen(true);
+          }}
           onClose={() => setCommandOpen(false)}
         />
       )}
+      {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
       {prefsOpen && (
         <PreferencesModal
           prefs={prefs}

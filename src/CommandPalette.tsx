@@ -7,6 +7,7 @@ interface CommandPaletteProps {
   onNavigate: (projectId: string, sectionId: string, pageId: string) => void;
   onCreatePage: () => void;
   onCreateProject: () => void;
+  onShowShortcuts: () => void;
   onClose: () => void;
 }
 
@@ -21,6 +22,7 @@ export function CommandPalette({
   onNavigate,
   onCreatePage,
   onCreateProject,
+  onShowShortcuts,
   onClose,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
@@ -63,6 +65,12 @@ export function CommandPalette({
       label: "Create new project",
       icon: "▣",
       run: onCreateProject,
+    },
+    {
+      kind: "action",
+      label: "Keyboard shortcuts",
+      icon: "?",
+      run: onShowShortcuts,
     },
   ];
 
@@ -137,6 +145,18 @@ export function CommandPalette({
             </li>
           ))}
         </ul>
+        <div className="command-footer">
+          <span>
+            <kbd>↑</kbd>
+            <kbd>↓</kbd> navigate
+          </span>
+          <span>
+            <kbd>↵</kbd> open
+          </span>
+          <span>
+            <kbd>esc</kbd> close
+          </span>
+        </div>
       </div>
     </div>
   );
