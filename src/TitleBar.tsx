@@ -2,6 +2,15 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const appWindow = getCurrentWindow();
 
+// Optional title-bar icon. Drop a file at src/assets/icon.* (png/svg/webp/jpg)
+// and it shows next to the title; absent = nothing rendered.
+const iconModules = import.meta.glob("./assets/icon.{png,svg,webp,jpg,jpeg}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+const ICON_URL = Object.values(iconModules)[0];
+
 interface TitleBarProps {
   onToggleSidebar: () => void;
   onOpenPreferences: () => void;
@@ -40,6 +49,9 @@ export function TitleBar({
             <line x1="6" y1="2.5" x2="6" y2="13.5" stroke="currentColor" />
           </svg>
         </button>
+        {ICON_URL && (
+          <img className="titlebar-icon" src={ICON_URL} alt="" data-tauri-drag-region />
+        )}
         <span className="titlebar-title" data-tauri-drag-region>
           Procrastinotes
         </span>

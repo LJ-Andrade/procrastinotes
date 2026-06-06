@@ -71,8 +71,15 @@ body {
   user-select: none;
 }
 
+.titlebar-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  margin-left: 10px;
+}
+
 .titlebar-title {
-  padding-left: 14px;
+  padding-left: 8px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
