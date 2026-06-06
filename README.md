@@ -16,9 +16,11 @@ Open → pick a project → start writing → close. No setup, no friction.
 The UI talks to a single `DataStore` interface (`src/data/`), so the same
 React app can later run on the web over IndexedDB without UI changes.
 
-See [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) for the product spec and
-[`docs/TECHNICAL_PLAN.md`](docs/TECHNICAL_PLAN.md) for the architecture and
-build plan.
+**Docs:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) is the developer guide
+(how the code works, conventions, gotchas, how to add features) — start there to
+continue development. See also [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md)
+(product spec) and [`docs/TECHNICAL_PLAN.md`](docs/TECHNICAL_PLAN.md) (original
+plan).
 
 ## Development
 

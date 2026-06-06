@@ -50,8 +50,8 @@ export function Ambient() {
         x: -10,
         y: Math.random() * h,
         r: Math.random() * 1.6 + 0.8,
-        vx: Math.random() * 0.07 + 0.04, // 40–110 px/s rightward
-        vy: -(Math.random() * 0.012 + 0.004), // gentle upward
+        vx: Math.random() * 0.035 + 0.018, // 18–53 px/s rightward (slow drift)
+        vy: -(Math.random() * 0.006 + 0.002), // very gentle upward
         a: Math.random() * 0.35 + 0.12,
       });
     }
