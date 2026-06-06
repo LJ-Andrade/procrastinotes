@@ -1,0 +1,197 @@
+:root {
+  --bg: #faf9f7;
+  --bg-panel: #f3f1ed;
+  --bg-elevated: #ffffff;
+  --border: #e7e3dc;
+  --text: #2b2a28;
+  --text-soft: #8a857d;
+  --accent: #b08968;
+  --accent-soft: #ece3da;
+  --radius: 8px;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-write: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 200px 240px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Columns ----------------------------------------------------------------- */
+
+.col {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.col-projects,
+.col-sections {
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+}
+
+.col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.col-header-pages {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+/* Lists ------------------------------------------------------------------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px 8px;
+  gap: 1px;
+}
+
+.list-item {
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.12s ease;
+}
+
+.list-item:hover {
+  background: var(--accent-soft);
+}
+
+.list-item.active {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.empty {
+  padding: 8px 12px;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Editor ------------------------------------------------------------------ */
+
+.col-editor {
+  background: var(--bg);
+  padding: 48px 12% 24px;
+}
+
+.page-title {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-write);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.page-title::placeholder {
+  color: var(--text-soft);
+}
+
+.page-body {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: var(--font-write);
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.page-body::placeholder {
+  color: var(--text-soft);
+}
+
+.status {
+  padding-top: 12px;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.placeholder {
+  margin: auto;
+  color: var(--text-soft);
+  font-size: 15px;
+}
+
+/* Dark mode --------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1917;
+    --bg-panel: #211f1d;
+    --bg-elevated: #262320;
+    --border: #322e2a;
+    --text: #e8e4dd;
+    --text-soft: #8a847b;
+    --accent: #c9a27e;
+    --accent-soft: #322b24;
+  }
+}
