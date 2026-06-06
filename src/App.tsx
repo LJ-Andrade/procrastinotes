@@ -9,6 +9,7 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { FindBar } from "./FindBar";
 import { Ambient } from "./Ambient";
 import { SidebarList } from "./SidebarList";
+import { BACKGROUNDS } from "./backgrounds";
 import { usePreferences } from "./preferences";
 import type { Page, Project, Section } from "./types";
 import "./App.css";
@@ -46,6 +47,8 @@ function App() {
   const [commandOpen, setCommandOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
+  // Data URL for a custom background image (loaded from disk via Rust).
+  const [customBgUrl, setCustomBgUrl] = useState("");
   // Bumped to ask the editor to take focus (used by quick capture).
   const [focusSignal, setFocusSignal] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
@@ -177,6 +180,25 @@ function App() {
       contentRef.current = { json: page.contentJson, text: page.contentText };
     });
   }, [pageId]);
+
+  // Load the custom background image (as a data URL) when one is selected.
+  useEffect(() => {
+    if (prefs.background === "custom" && prefs.customBackgroundPath) {
+      store
+        .readImageDataUrl(prefs.customBackgroundPath)
+        .then(setCustomBgUrl)
+        .catch(() => setCustomBgUrl(""));
+    } else {
+      setCustomBgUrl("");
+    }
+  }, [prefs.background, prefs.customBackgroundPath]);
+
+  const editorBgUrl =
+    prefs.background === "custom"
+      ? customBgUrl
+      : prefs.background
+        ? BACKGROUNDS.find((b) => b.id === prefs.background)?.url ?? ""
+        : "";
 
   // --- Autosave ------------------------------------------------------------
 
@@ -329,6 +351,20 @@ function App() {
     setProjectId(list[0]?.id ?? null);
   }
 
+  // Background image
+  async function pickBackground() {
+    const selected = await open({
+      title: "Choose background image",
+      multiple: false,
+      filters: [
+        { name: "Images", extensions: ["jpg", "jpeg", "png", "webp", "gif", "svg"] },
+      ],
+    });
+    const path = typeof selected === "string" ? selected : null;
+    if (!path) return;
+    updatePrefs({ background: "custom", customBackgroundPath: path });
+  }
+
   /** Jump to a specific page, loading its project and section along the way.
       Only the pending refs that a cascading loader will actually consume are
       set, so nothing leaks into later navigation. */
@@ -425,30 +461,43 @@ function App() {
       </aside>
 
       <main className="col col-editor">
-        {pageId ? (
-          <>
-            <input
-              className="page-title"
-              value={title}
-              placeholder="Untitled"
-              onChange={(e) => {
-                setTitle(e.target.value);
-                scheduleSave();
-              }}
-            />
-            <Editor
-              docId={pageId}
-              initialJson={pageContent}
-              onChange={onEditorChange}
-              focusSignal={focusSignal}
-            />
-            <footer className="status">{saving ? "Saving…" : "Saved"}</footer>
-          </>
-        ) : (
-          <div className="placeholder">
-            <p>Select or create a page to start writing.</p>
-          </div>
+        {editorBgUrl && (
+          <div
+            className="editor-bg"
+            style={{
+              backgroundImage: `url(${editorBgUrl})`,
+              opacity: prefs.backgroundOpacity,
+            }}
+          />
         )}
+        <div className="editor-content">
+          {pageId ? (
+            <>
+              <input
+                className="page-title"
+                value={title}
+                placeholder="Untitled"
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  scheduleSave();
+                }}
+              />
+              <Editor
+                docId={pageId}
+                initialJson={pageContent}
+                onChange={onEditorChange}
+                focusSignal={focusSignal}
+              />
+              <footer className="status">
+                {saving ? "Saving…" : "Saved"}
+              </footer>
+            </>
+          ) : (
+            <div className="placeholder">
+              <p>Select or create a page to start writing.</p>
+            </div>
+          )}
+        </div>
       </main>
       </div>
       {commandOpen && (
@@ -474,6 +523,7 @@ function App() {
           update={updatePrefs}
           onExportBackup={exportBackup}
           onImportBackup={importBackup}
+          onPickBackground={pickBackground}
           onClose={() => setPrefsOpen(false)}
         />
       )}

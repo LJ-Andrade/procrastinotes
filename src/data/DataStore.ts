@@ -45,4 +45,8 @@ export interface DataStore {
   exportBackup(path: string): Promise<void>;
   /** Replace all data with the backup at `path` (destructive). */
   importBackup(path: string): Promise<void>;
+
+  // Images
+  /** Read an image file and return it as a `data:` URL. */
+  readImageDataUrl(path: string): Promise<string>;
 }

@@ -4,12 +4,14 @@ import {
   type Preferences,
   type Theme,
 } from "./preferences";
+import { BACKGROUNDS } from "./backgrounds";
 
 interface PreferencesModalProps {
   prefs: Preferences;
   update: (patch: Partial<Preferences>) => void;
   onExportBackup: () => void;
   onImportBackup: () => void;
+  onPickBackground: () => void;
   onClose: () => void;
 }
 
@@ -20,6 +22,7 @@ export function PreferencesModal({
   update,
   onExportBackup,
   onImportBackup,
+  onPickBackground,
   onClose,
 }: PreferencesModalProps) {
   return (
@@ -82,6 +85,50 @@ export function PreferencesModal({
               />
             ))}
           </div>
+        </section>
+
+        <section className="pref-section">
+          <span className="pref-label">Editor background</span>
+          <div className="bg-row">
+            <button
+              className={`bg-thumb bg-none ${prefs.background === "" ? "active" : ""}`}
+              onClick={() => update({ background: "" })}
+              title="None"
+            >
+              ✕
+            </button>
+            {BACKGROUNDS.map((b) => (
+              <button
+                key={b.id}
+                className={`bg-thumb ${prefs.background === b.id ? "active" : ""}`}
+                style={{ backgroundImage: `url(${b.url})` }}
+                onClick={() => update({ background: b.id })}
+                title={b.label}
+              />
+            ))}
+            <button
+              className={`bg-thumb bg-upload ${prefs.background === "custom" ? "active" : ""}`}
+              onClick={onPickBackground}
+              title="Choose your own image"
+            >
+              +
+            </button>
+          </div>
+          {prefs.background !== "" && (
+            <label className="slider-row">
+              <span>Opacity</span>
+              <input
+                type="range"
+                min={0.04}
+                max={0.7}
+                step={0.02}
+                value={prefs.backgroundOpacity}
+                onChange={(e) =>
+                  update({ backgroundOpacity: Number(e.target.value) })
+                }
+              />
+            </label>
+          )}
         </section>
 
         <section className="pref-section">

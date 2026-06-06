@@ -40,4 +40,7 @@ export const tauriDataStore: DataStore = {
   // Backup
   exportBackup: (path) => invoke("export_backup", { path }),
   importBackup: (path) => invoke("import_backup", { path }),
+
+  // Images
+  readImageDataUrl: (path) => invoke<string>("read_image_data_url", { path }),
 };

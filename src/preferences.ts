@@ -12,6 +12,12 @@ export interface Preferences {
   profileAvatar: string;
   /** Subtle floating particles. Off by default to keep things calm. */
   ambient: boolean;
+  /** Editor background: "" (none), a preset id, or "custom". */
+  background: string;
+  /** Absolute path of a user-chosen custom background image. */
+  customBackgroundPath: string;
+  /** Background image opacity (0–1). Soft by default. */
+  backgroundOpacity: number;
 }
 
 export const ACCENTS: { id: string; label: string; color: string; soft: string }[] =
@@ -33,6 +39,9 @@ const DEFAULTS: Preferences = {
   profileName: "You",
   profileAvatar: "🦊",
   ambient: false,
+  background: "",
+  customBackgroundPath: "",
+  backgroundOpacity: 0.12,
 };
 
 function load(): Preferences {

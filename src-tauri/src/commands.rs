@@ -417,6 +417,34 @@ pub fn search(db: State<Db>, query: String) -> Result<Vec<SearchHit>, String> {
 }
 
 // ---------------------------------------------------------------------------
+// Images
+// ---------------------------------------------------------------------------
+
+/// Reads an image file and returns it as a `data:` URL, so a user-chosen
+/// background can be shown in the webview without any asset-protocol setup.
+#[tauri::command]
+pub fn read_image_data_url(path: String) -> Result<String, String> {
+    use base64::Engine;
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+    let ext = std::path::Path::new(&path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+    let mime = match ext.as_str() {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "webp" => "image/webp",
+        "gif" => "image/gif",
+        "svg" => "image/svg+xml",
+        "bmp" => "image/bmp",
+        _ => "application/octet-stream",
+    };
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    Ok(format!("data:{};base64,{}", mime, b64))
+}
+
+// ---------------------------------------------------------------------------
 // Backup
 // ---------------------------------------------------------------------------
 

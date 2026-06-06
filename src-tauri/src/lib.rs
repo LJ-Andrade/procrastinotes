@@ -43,6 +43,7 @@ pub fn run() {
             commands::delete_page,
             commands::reorder_pages,
             commands::search,
+            commands::read_image_data_url,
             commands::export_backup,
             commands::import_backup,
         ])
