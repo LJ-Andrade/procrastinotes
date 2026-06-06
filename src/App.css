@@ -175,6 +175,19 @@ body {
   white-space: nowrap;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px 4px;
+}
+
+.brand-logo {
+  height: 26px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 .col-header {
   display: flex;
   align-items: center;
