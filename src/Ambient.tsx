@@ -29,17 +29,18 @@ export function Ambient() {
     let w = 0;
     let h = 0;
 
+    // Size to the canvas's own box (it fills the editor area via CSS), not the
+    // window, so particles stay inside the editor.
     function resize() {
-      w = window.innerWidth;
-      h = window.innerHeight;
-      canvas!.width = w * dpr;
-      canvas!.height = h * dpr;
-      canvas!.style.width = `${w}px`;
-      canvas!.style.height = `${h}px`;
+      w = canvas!.clientWidth;
+      h = canvas!.clientHeight;
+      canvas!.width = Math.max(1, w * dpr);
+      canvas!.height = Math.max(1, h * dpr);
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     resize();
-    window.addEventListener("resize", resize);
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
 
     const particles: Particle[] = [];
 
@@ -93,7 +94,7 @@ export function Ambient() {
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      observer.disconnect();
     };
   }, []);
 

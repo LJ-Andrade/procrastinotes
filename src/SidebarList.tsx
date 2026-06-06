@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 export interface SidebarEntry {
   id: string;
@@ -33,6 +34,7 @@ export function SidebarList({
   const [overId, setOverId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<SidebarEntry | null>(null);
 
   function startEdit(item: SidebarEntry) {
     setEditingId(item.id);
@@ -67,6 +69,7 @@ export function SidebarList({
   }
 
   return (
+    <>
     <div className="list">
       {items.map((item) => {
         const editing = editingId === item.id;
@@ -117,9 +120,7 @@ export function SidebarList({
                 <button
                   className="item-del"
                   title="Delete"
-                  onClick={() => {
-                    if (confirm(`Delete "${item.label}"?`)) onDelete(item.id);
-                  }}
+                  onClick={() => setPendingDelete(item)}
                 >
                   ×
                 </button>
@@ -129,5 +130,17 @@ export function SidebarList({
         );
       })}
     </div>
+    {pendingDelete && (
+      <ConfirmDialog
+        title={`Delete “${pendingDelete.label}”?`}
+        message="This can't be undone from the app."
+        onConfirm={() => {
+          onDelete(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
+    )}
+    </>
   );
 }

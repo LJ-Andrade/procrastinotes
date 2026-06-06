@@ -51,11 +51,12 @@ body {
   grid-template-columns: 0 0 1fr;
 }
 
-/* Optional ambient particle layer: above the UI, below modals, never clickable. */
+/* Optional ambient particle layer: inside the editor, over the background
+   image but under the text. Never clickable. */
 .ambient {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 50;
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -361,7 +362,7 @@ body {
 
 .editor-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -800,6 +801,69 @@ body {
   font-size: 16px;
   font-weight: 700;
   margin: 0;
+}
+
+/* Confirmation dialog */
+.confirm {
+  width: 340px;
+  max-width: calc(100vw - 48px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  padding: 22px;
+}
+
+.confirm-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.confirm-message {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-ghost {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.btn-ghost:hover {
+  background: var(--accent-soft);
+}
+
+.btn-danger {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #e03131;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.btn-danger:hover {
+  background: #c92a2a;
 }
 
 .pref-section {

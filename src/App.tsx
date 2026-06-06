@@ -385,7 +385,6 @@ function App() {
 
   return (
     <div className="root">
-      {prefs.ambient && <Ambient />}
       <TitleBar
         onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
         onOpenPreferences={() => setPrefsOpen(true)}
@@ -470,6 +469,7 @@ function App() {
             }}
           />
         )}
+        {prefs.ambient && <Ambient />}
         <div className="editor-content">
           {pageId ? (
             <>
