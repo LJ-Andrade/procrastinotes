@@ -29,18 +29,26 @@ export function Ambient() {
     let w = 0;
     let h = 0;
 
-    // Size to the canvas's own box (it fills the editor area via CSS), not the
-    // window, so particles stay inside the editor.
+    // Observe the parent's box, not the canvas itself. Observing the canvas
+    // makes a feedback loop: writing canvas.width changes its intrinsic size,
+    // which can fire the observer again and double the value each round
+    // until Chromium gives up and shows a broken-canvas placeholder.
+    const parent = canvas.parentElement;
+    if (!parent) return;
+
     function resize() {
-      w = canvas!.clientWidth;
-      h = canvas!.clientHeight;
-      canvas!.width = Math.max(1, w * dpr);
-      canvas!.height = Math.max(1, h * dpr);
+      const nextW = parent!.clientWidth;
+      const nextH = parent!.clientHeight;
+      if (nextW === w && nextH === h) return;
+      w = nextW;
+      h = nextH;
+      canvas!.width = Math.max(1, Math.floor(w * dpr));
+      canvas!.height = Math.max(1, Math.floor(h * dpr));
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     resize();
     const observer = new ResizeObserver(resize);
-    observer.observe(canvas);
+    observer.observe(parent);
 
     const particles: Particle[] = [];
 
