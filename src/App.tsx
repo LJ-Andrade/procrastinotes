@@ -16,15 +16,6 @@ import "./App.css";
 
 const AUTOSAVE_DELAY = 600;
 
-// Optional brand logo shown above Projects. Drop a file at src/assets/logo.*
-// (png/svg/webp/jpg) and it appears automatically; absent = nothing rendered.
-const logoModules = import.meta.glob("./assets/logo.{png,svg,webp,jpg,jpeg}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-}) as Record<string, string>;
-const LOGO_URL = Object.values(logoModules)[0];
-
 /** True when the event target is an editable element (input/editor), so global
     single-key shortcuts like "?" don't fire while the user is typing. */
 function isTyping(target: EventTarget | null): boolean {
@@ -402,11 +393,6 @@ function App() {
       />
       <div className={`app ${sidebarCollapsed ? "collapsed" : ""}`}>
         <aside className="col col-projects">
-        {LOGO_URL && (
-          <div className="brand">
-            <img src={LOGO_URL} alt="Logo" className="brand-logo" />
-          </div>
-        )}
         <header className="col-header">
           <span>Projects</span>
           <button className="icon-btn" onClick={addProject} title="New project">

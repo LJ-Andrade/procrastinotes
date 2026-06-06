@@ -182,19 +182,6 @@ body {
   white-space: nowrap;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  padding: 12px 14px 4px;
-}
-
-.brand-logo {
-  height: 26px;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-}
-
 .col-header {
   display: flex;
   align-items: center;
@@ -683,7 +670,7 @@ body {
 
 :root[data-theme="dark"] {
   --bg: #1a1917;
-  --bg-panel: #211f1d;
+  --bg-panel: #1b1e21;
   --bg-elevated: #262320;
   --border: #322e2a;
   --text: #e8e4dd;
@@ -695,7 +682,7 @@ body {
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
     --bg: #1a1917;
-    --bg-panel: #211f1d;
+    --bg-panel: #1b1e21;
     --bg-elevated: #262320;
     --border: #322e2a;
     --text: #e8e4dd;
@@ -759,6 +746,47 @@ body {
   border-radius: 12px;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
   padding: 8px 20px 22px;
+}
+
+/* Preferences uses a wider, two-column layout. */
+.prefs-modal {
+  width: 620px;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+.pref-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 26px;
+  row-gap: 18px;
+  align-items: start;
+}
+
+.pref-grid .pref-section {
+  margin-top: 0;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.pref-button.primary {
+  flex: none;
+  min-width: 120px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.pref-button.primary:hover {
+  background: var(--accent);
+  filter: brightness(1.06);
 }
 
 .modal-header {

@@ -27,7 +27,7 @@ export function PreferencesModal({
 }: PreferencesModalProps) {
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal prefs-modal" onClick={(e) => e.stopPropagation()}>
         <header className="modal-header">
           <h2>Preferences</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Close">
@@ -35,6 +35,7 @@ export function PreferencesModal({
           </button>
         </header>
 
+        <div className="pref-grid">
         <section className="pref-section">
           <span className="pref-label">Profile</span>
           <input
@@ -158,6 +159,13 @@ export function PreferencesModal({
             </button>
           </div>
         </section>
+        </div>
+
+        <footer className="modal-footer">
+          <button className="pref-button primary" onClick={onClose}>
+            Save
+          </button>
+        </footer>
       </div>
     </div>
   );
