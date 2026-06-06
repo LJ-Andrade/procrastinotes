@@ -815,6 +815,28 @@ body {
   border-color: var(--text);
 }
 
+.pref-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.pref-button {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.pref-button:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
 /* Command palette --------------------------------------------------------- */
 
 .command-overlay {

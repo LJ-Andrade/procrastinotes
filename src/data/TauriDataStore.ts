@@ -36,4 +36,8 @@ export const tauriDataStore: DataStore = {
 
   // Search
   search: (query) => invoke<SearchHit[]>("search", { query }),
+
+  // Backup
+  exportBackup: (path) => invoke("export_backup", { path }),
+  importBackup: (path) => invoke("import_backup", { path }),
 };

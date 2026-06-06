@@ -8,6 +8,8 @@ interface CommandPaletteProps {
   onCreatePage: () => void;
   onCreateProject: () => void;
   onShowShortcuts: () => void;
+  onExportBackup: () => void;
+  onImportBackup: () => void;
   onClose: () => void;
 }
 
@@ -23,6 +25,8 @@ export function CommandPalette({
   onCreatePage,
   onCreateProject,
   onShowShortcuts,
+  onExportBackup,
+  onImportBackup,
   onClose,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
@@ -65,6 +69,18 @@ export function CommandPalette({
       label: "Create new project",
       icon: "▣",
       run: onCreateProject,
+    },
+    {
+      kind: "action",
+      label: "Export backup",
+      icon: "↧",
+      run: onExportBackup,
+    },
+    {
+      kind: "action",
+      label: "Import backup",
+      icon: "↥",
+      run: onImportBackup,
     },
     {
       kind: "action",

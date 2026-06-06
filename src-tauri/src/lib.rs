@@ -10,6 +10,7 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // The SQLite file lives in the per-app data directory. It is the
             // source of truth; the app works fully offline.
@@ -42,6 +43,8 @@ pub fn run() {
             commands::delete_page,
             commands::reorder_pages,
             commands::search,
+            commands::export_backup,
+            commands::import_backup,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

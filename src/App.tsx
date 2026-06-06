@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { save, open } from "@tauri-apps/plugin-dialog";
 import { store } from "./data";
 import { Editor, type EditorChange } from "./editor/Editor";
 import { TitleBar } from "./TitleBar";
@@ -275,6 +276,40 @@ function App() {
     setPages(await store.listPages(sectionId));
   }
 
+  // Backup
+  async function exportBackup() {
+    const path = await save({
+      title: "Export backup",
+      defaultPath: "procrastinotes-backup.db",
+      filters: [{ name: "Procrastinotes backup", extensions: ["db"] }],
+    });
+    if (!path) return;
+    await store.exportBackup(path);
+  }
+
+  async function importBackup() {
+    const selected = await open({
+      title: "Import backup",
+      multiple: false,
+      filters: [{ name: "Procrastinotes backup", extensions: ["db"] }],
+    });
+    const path = typeof selected === "string" ? selected : null;
+    if (!path) return;
+    if (
+      !confirm(
+        "Importing will replace ALL current data with this backup. Continue?",
+      )
+    )
+      return;
+    await store.importBackup(path);
+    // Reload everything from the freshly imported data.
+    setSectionId(null);
+    setPageId(null);
+    const list = await store.listProjects();
+    setProjects(list);
+    setProjectId(list[0]?.id ?? null);
+  }
+
   /** Jump to a specific page, loading its project and section along the way.
       Only the pending refs that a cascading loader will actually consume are
       set, so nothing leaks into later navigation. */
@@ -406,6 +441,8 @@ function App() {
             setCommandOpen(false);
             setHelpOpen(true);
           }}
+          onExportBackup={exportBackup}
+          onImportBackup={importBackup}
           onClose={() => setCommandOpen(false)}
         />
       )}
@@ -414,6 +451,8 @@ function App() {
         <PreferencesModal
           prefs={prefs}
           update={updatePrefs}
+          onExportBackup={exportBackup}
+          onImportBackup={importBackup}
           onClose={() => setPrefsOpen(false)}
         />
       )}

@@ -39,4 +39,10 @@ export interface DataStore {
 
   // Search
   search(query: string): Promise<SearchHit[]>;
+
+  // Backup
+  /** Write a portable snapshot of the database to `path`. */
+  exportBackup(path: string): Promise<void>;
+  /** Replace all data with the backup at `path` (destructive). */
+  importBackup(path: string): Promise<void>;
 }

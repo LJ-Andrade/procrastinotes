@@ -415,3 +415,71 @@ pub fn search(db: State<Db>, query: String) -> Result<Vec<SearchHit>, String> {
     rows.collect::<rusqlite::Result<Vec<_>>>()
         .map_err(|e| e.to_string())
 }
+
+// ---------------------------------------------------------------------------
+// Backup
+// ---------------------------------------------------------------------------
+
+/// Escapes a path for safe interpolation into a SQL string literal.
+/// (VACUUM INTO / ATTACH do not accept bound parameters.)
+fn sql_quote(path: &str) -> String {
+    path.replace('\'', "''")
+}
+
+/// Writes a clean, self-contained snapshot of the database to `path`.
+/// Uses `VACUUM INTO`, which captures all committed data (WAL included).
+#[tauri::command]
+pub fn export_backup(db: State<Db>, path: String) -> Result<(), String> {
+    let conn = conn!(db);
+    // VACUUM INTO requires the destination not to exist yet.
+    let _ = std::fs::remove_file(&path);
+    conn.execute_batch(&format!("VACUUM INTO '{}';", sql_quote(&path)))
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Replaces all data with the contents of the backup file at `path`.
+/// Destructive: the caller must confirm with the user first.
+#[tauri::command]
+pub fn import_backup(db: State<Db>, path: String) -> Result<(), String> {
+    let mut conn = conn!(db);
+    conn.execute_batch(&format!("ATTACH DATABASE '{}' AS src;", sql_quote(&path)))
+        .map_err(|e| format!("Could not open backup: {e}"))?;
+
+    let result = (|| -> rusqlite::Result<()> {
+        // Validate the file looks like a Procrastinotes database.
+        conn.query_row(
+            "SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = 'projects'",
+            [],
+            |_| Ok(()),
+        )?;
+
+        let tx = conn.transaction()?;
+        tx.execute_batch(
+            "DELETE FROM pages_fts;
+             DELETE FROM pages;
+             DELETE FROM sections;
+             DELETE FROM projects;
+             INSERT INTO projects
+                 (id, name, icon, color, cover, sort_order, created_at, updated_at, deleted_at)
+                 SELECT id, name, icon, color, cover, sort_order, created_at, updated_at, deleted_at
+                 FROM src.projects;
+             INSERT INTO sections
+                 (id, project_id, parent_id, name, sort_order, created_at, updated_at, deleted_at)
+                 SELECT id, project_id, parent_id, name, sort_order, created_at, updated_at, deleted_at
+                 FROM src.sections;
+             INSERT INTO pages
+                 (id, section_id, parent_id, title, content_json, content_text, sort_order, created_at, updated_at, deleted_at)
+                 SELECT id, section_id, parent_id, title, content_json, content_text, sort_order, created_at, updated_at, deleted_at
+                 FROM src.pages;
+             INSERT INTO pages_fts (page_id, title, content_text)
+                 SELECT id, title, content_text FROM pages WHERE deleted_at IS NULL;",
+        )?;
+        tx.commit()
+    })();
+
+    // Always detach, regardless of success.
+    let _ = conn.execute_batch("DETACH DATABASE src;");
+    result.map_err(|e| format!("Import failed: {e}"))?;
+    Ok(())
+}

@@ -8,6 +8,8 @@ import {
 interface PreferencesModalProps {
   prefs: Preferences;
   update: (patch: Partial<Preferences>) => void;
+  onExportBackup: () => void;
+  onImportBackup: () => void;
   onClose: () => void;
 }
 
@@ -16,6 +18,8 @@ const THEMES: Theme[] = ["light", "dark", "auto"];
 export function PreferencesModal({
   prefs,
   update,
+  onExportBackup,
+  onImportBackup,
   onClose,
 }: PreferencesModalProps) {
   return (
@@ -77,6 +81,18 @@ export function PreferencesModal({
                 title={a.label}
               />
             ))}
+          </div>
+        </section>
+
+        <section className="pref-section">
+          <span className="pref-label">Backup</span>
+          <div className="pref-buttons">
+            <button className="pref-button" onClick={onExportBackup}>
+              Export…
+            </button>
+            <button className="pref-button" onClick={onImportBackup}>
+              Import…
+            </button>
           </div>
         </section>
       </div>
