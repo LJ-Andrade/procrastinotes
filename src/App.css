@@ -177,7 +177,10 @@ body {
   align-items: center;
   justify-content: center;
   width: 18px;
-  height: 22px;
+  /* Match the body line-height (17px * 1.7) so the icon, centered here and
+     top-aligned to the line by the plugin, lands on the line's center. */
+  height: 1.7em;
+  font-size: 17px;
   margin-right: 2px;
   border-radius: 5px;
   color: var(--text-soft);
@@ -206,14 +209,10 @@ body {
   padding-left: var(--writing-inset);
 }
 
-/* Tight spacing between blocks for a notepad feel. Headings and lists keep
-   their own (larger) margins via the more specific rules below. */
+/* Each Enter starts a new paragraph with a little breathing room.
+   Headings and lists keep their own margins via the more specific rules. */
 .ProseMirror > * + * {
-  margin-top: 0.3em;
-}
-
-.ProseMirror p {
-  margin: 0;
+  margin-top: 0.7em;
 }
 
 .ProseMirror h1 {
