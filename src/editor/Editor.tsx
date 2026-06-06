@@ -1,0 +1,90 @@
+import { useEditor, EditorContent, type JSONContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import Placeholder from "@tiptap/extension-placeholder";
+import { useEffect, useRef } from "react";
+
+export interface EditorChange {
+  /** Tiptap document as a JSON string. */
+  json: string;
+  /** Derived plain text, used for search. */
+  text: string;
+}
+
+interface EditorProps {
+  /** Identifies the document being edited. When it changes, content reloads. */
+  docId: string;
+  /** Stored content for this document (Tiptap JSON string, or legacy text). */
+  initialJson: string;
+  onChange: (change: EditorChange) => void;
+}
+
+/**
+ * Tiptap-backed editor. Supports headings, bold/italic/strike, bullet and
+ * ordered lists, code blocks, and task lists with nested checkboxes.
+ *
+ * Markdown-style input rules work while typing:
+ *   "# "  → heading      "- "   → bullet list
+ *   "1. " → ordered list  "[ ] " → checkbox (task list)
+ */
+export function Editor({ docId, initialJson, onChange }: EditorProps) {
+  // Keep the latest onChange without recreating the editor instance.
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      Placeholder.configure({ placeholder: "Start writing…" }),
+    ],
+    content: parseContent(initialJson),
+    onUpdate: ({ editor }) => {
+      onChangeRef.current({
+        json: JSON.stringify(editor.getJSON()),
+        text: editor.getText(),
+      });
+    },
+  });
+
+  // Load the content of the selected document without emitting a save.
+  useEffect(() => {
+    if (!editor) return;
+    editor.commands.setContent(parseContent(initialJson) ?? "", {
+      emitUpdate: false,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docId, editor]);
+
+  return <EditorContent editor={editor} className="editor" />;
+}
+
+/**
+ * Turns stored content into something Tiptap can render.
+ * Handles three cases: a real Tiptap doc, the Phase 0 `{type:"plain"}`
+ * placeholder, and raw text — so existing pages migrate cleanly.
+ */
+function parseContent(raw: string): JSONContent | undefined {
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed?.type === "doc") return parsed as JSONContent;
+    if (parsed?.type === "plain") return textToDoc(parsed.text ?? "");
+  } catch {
+    return textToDoc(raw);
+  }
+  return undefined;
+}
+
+function textToDoc(text: string): JSONContent | undefined {
+  if (!text) return undefined;
+  return {
+    type: "doc",
+    content: text.split("\n").map((line) => ({
+      type: "paragraph",
+      content: line ? [{ type: "text", text: line }] : [],
+    })),
+  };
+}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { store } from "./data";
+import { Editor, type EditorChange } from "./editor/Editor";
 import type { Page, Project, Section } from "./types";
 import "./App.css";
 
@@ -16,10 +17,16 @@ function App() {
   const [pageId, setPageId] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [pageContent, setPageContent] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Refs hold the freshest values so the debounced save never reads stale data.
   const saveTimer = useRef<number | null>(null);
+  const pageIdRef = useRef<string | null>(null);
+  const titleRef = useRef("");
+  const contentRef = useRef<EditorChange>({ json: "", text: "" });
+  pageIdRef.current = pageId;
+  titleRef.current = title;
 
   // --- Loaders -------------------------------------------------------------
 
@@ -33,7 +40,6 @@ function App() {
     loadProjects();
   }, [loadProjects]);
 
-  // Reload sections whenever the selected project changes.
   useEffect(() => {
     if (!projectId) {
       setSections([]);
@@ -46,7 +52,6 @@ function App() {
     });
   }, [projectId]);
 
-  // Reload pages whenever the selected section changes.
   useEffect(() => {
     if (!sectionId) {
       setPages([]);
@@ -63,35 +68,45 @@ function App() {
   useEffect(() => {
     if (!pageId) {
       setTitle("");
-      setBody("");
+      setPageContent("");
+      contentRef.current = { json: "", text: "" };
       return;
     }
     store.getPage(pageId).then((page) => {
       if (!page) return;
       setTitle(page.title);
-      setBody(page.contentText);
+      setPageContent(page.contentJson);
+      contentRef.current = { json: page.contentJson, text: page.contentText };
     });
   }, [pageId]);
 
   // --- Autosave ------------------------------------------------------------
 
-  const scheduleSave = useCallback(
-    (nextTitle: string, nextBody: string) => {
-      if (!pageId) return;
-      if (saveTimer.current) window.clearTimeout(saveTimer.current);
-      setSaving(true);
-      saveTimer.current = window.setTimeout(async () => {
-        // Placeholder content shape until the Tiptap editor lands in Phase 2.
-        const contentJson = JSON.stringify({ type: "plain", text: nextBody });
-        await store.updatePage(pageId, nextTitle, contentJson, nextBody);
-        setPages((prev) =>
-          prev.map((p) => (p.id === pageId ? { ...p, title: nextTitle } : p)),
-        );
-        setSaving(false);
-      }, AUTOSAVE_DELAY);
-    },
-    [pageId],
-  );
+  const scheduleSave = useCallback(() => {
+    if (!pageIdRef.current) return;
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    setSaving(true);
+    saveTimer.current = window.setTimeout(async () => {
+      const id = pageIdRef.current;
+      if (!id) return;
+      const nextTitle = titleRef.current;
+      await store.updatePage(
+        id,
+        nextTitle,
+        contentRef.current.json,
+        contentRef.current.text,
+      );
+      setPages((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, title: nextTitle } : p)),
+      );
+      setSaving(false);
+    }, AUTOSAVE_DELAY);
+  }, []);
+
+  function onEditorChange(change: EditorChange) {
+    contentRef.current = change;
+    scheduleSave();
+  }
 
   // --- Actions -------------------------------------------------------------
 
@@ -108,16 +123,14 @@ function App() {
     const name = prompt("Section name")?.trim();
     if (!name) return;
     const section = await store.createSection(projectId, name);
-    const list = await store.listSections(projectId);
-    setSections(list);
+    setSections(await store.listSections(projectId));
     setSectionId(section.id);
   }
 
   async function addPage() {
     if (!sectionId) return;
     const page = await store.createPage(sectionId, "Untitled");
-    const list = await store.listPages(sectionId);
-    setPages(list);
+    setPages(await store.listPages(sectionId));
     setPageId(page.id);
   }
 
@@ -142,9 +155,7 @@ function App() {
               {p.name}
             </button>
           ))}
-          {projects.length === 0 && (
-            <p className="empty">No projects yet.</p>
-          )}
+          {projects.length === 0 && <p className="empty">No projects yet.</p>}
         </nav>
       </aside>
 
@@ -205,17 +216,13 @@ function App() {
               placeholder="Untitled"
               onChange={(e) => {
                 setTitle(e.target.value);
-                scheduleSave(e.target.value, body);
+                scheduleSave();
               }}
             />
-            <textarea
-              className="page-body"
-              value={body}
-              placeholder="Start writing…"
-              onChange={(e) => {
-                setBody(e.target.value);
-                scheduleSave(title, e.target.value);
-              }}
+            <Editor
+              docId={pageId}
+              initialJson={pageContent}
+              onChange={onEditorChange}
             />
             <footer className="status">{saving ? "Saving…" : "Saved"}</footer>
           </>
