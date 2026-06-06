@@ -3,6 +3,7 @@ import { store } from "./data";
 import { Editor, type EditorChange } from "./editor/Editor";
 import { TitleBar } from "./TitleBar";
 import { PreferencesModal } from "./PreferencesModal";
+import { CommandPalette } from "./CommandPalette";
 import { usePreferences } from "./preferences";
 import type { Page, Project, Section } from "./types";
 import "./App.css";
@@ -25,6 +26,9 @@ function App() {
 
   const { prefs, update: updatePrefs } = usePreferences();
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  // Bumped to ask the editor to take focus (used by quick capture).
+  const [focusSignal, setFocusSignal] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem("procrastinotes.sidebar") === "collapsed",
   );
@@ -36,10 +40,23 @@ function App() {
     );
   }, [sidebarCollapsed]);
 
-  // Global shortcuts: toggle sidebar, open preferences, close modal.
+  // Global shortcuts. Uses refs/stable setters so the handler never goes stale.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.ctrlKey && e.key === "\\") {
+      if (e.ctrlKey && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        setCommandOpen(true);
+      } else if (e.ctrlKey && (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        const s = sectionIdRef.current;
+        if (s) {
+          store.createPage(s, "Untitled").then(async (page) => {
+            setPages(await store.listPages(s));
+            setPageId(page.id);
+            setFocusSignal((n) => n + 1);
+          });
+        }
+      } else if (e.ctrlKey && e.key === "\\") {
         e.preventDefault();
         setSidebarCollapsed((c) => !c);
       } else if (e.ctrlKey && e.key === ",") {
@@ -47,6 +64,7 @@ function App() {
         setPrefsOpen(true);
       } else if (e.key === "Escape") {
         setPrefsOpen(false);
+        setCommandOpen(false);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -60,6 +78,14 @@ function App() {
   const contentRef = useRef<EditorChange>({ json: "", text: "" });
   pageIdRef.current = pageId;
   titleRef.current = title;
+
+  // When navigating to a specific page (e.g. from search), these hold the
+  // target section/page so the cascading loaders select them instead of the
+  // first item.
+  const pendingSection = useRef<string | null>(null);
+  const pendingPage = useRef<string | null>(null);
+  const sectionIdRef = useRef<string | null>(null);
+  sectionIdRef.current = sectionId;
 
   // --- Loaders -------------------------------------------------------------
 
@@ -81,7 +107,11 @@ function App() {
     }
     store.listSections(projectId).then((list) => {
       setSections(list);
-      setSectionId(list[0]?.id ?? null);
+      const target = pendingSection.current;
+      pendingSection.current = null;
+      setSectionId(
+        target && list.some((s) => s.id === target) ? target : list[0]?.id ?? null,
+      );
     });
   }, [projectId]);
 
@@ -93,7 +123,11 @@ function App() {
     }
     store.listPages(sectionId).then((list) => {
       setPages(list);
-      setPageId(list[0]?.id ?? null);
+      const target = pendingPage.current;
+      pendingPage.current = null;
+      setPageId(
+        target && list.some((p) => p.id === target) ? target : list[0]?.id ?? null,
+      );
     });
   }, [sectionId]);
 
@@ -165,6 +199,22 @@ function App() {
     const page = await store.createPage(sectionId, "Untitled");
     setPages(await store.listPages(sectionId));
     setPageId(page.id);
+  }
+
+  /** Jump to a specific page, loading its project and section along the way.
+      Only the pending refs that a cascading loader will actually consume are
+      set, so nothing leaks into later navigation. */
+  function navigateTo(targetProject: string, targetSection: string, targetPage: string) {
+    if (targetProject !== projectId) {
+      pendingSection.current = targetSection;
+      pendingPage.current = targetPage;
+      setProjectId(targetProject);
+    } else if (targetSection !== sectionId) {
+      pendingPage.current = targetPage;
+      setSectionId(targetSection);
+    } else {
+      setPageId(targetPage);
+    }
   }
 
   // --- Render --------------------------------------------------------------
@@ -269,6 +319,7 @@ function App() {
               docId={pageId}
               initialJson={pageContent}
               onChange={onEditorChange}
+              focusSignal={focusSignal}
             />
             <footer className="status">{saving ? "Saving…" : "Saved"}</footer>
           </>
@@ -279,6 +330,15 @@ function App() {
         )}
       </main>
       </div>
+      {commandOpen && (
+        <CommandPalette
+          projects={projects}
+          onNavigate={navigateTo}
+          onCreatePage={addPage}
+          onCreateProject={addProject}
+          onClose={() => setCommandOpen(false)}
+        />
+      )}
       {prefsOpen && (
         <PreferencesModal
           prefs={prefs}

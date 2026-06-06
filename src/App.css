@@ -688,3 +688,87 @@ body {
 .swatch.active {
   border-color: var(--text);
 }
+
+/* Command palette --------------------------------------------------------- */
+
+.command-overlay {
+  align-items: flex-start;
+  padding-top: 12vh;
+}
+
+.command {
+  width: 560px;
+  max-width: calc(100vw - 48px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.command-input {
+  width: 100%;
+  padding: 15px 18px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+}
+
+.command-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.command-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.command-item.active {
+  background: var(--accent-soft);
+}
+
+.command-icon {
+  color: var(--text-soft);
+  width: 16px;
+  text-align: center;
+  align-self: center;
+}
+
+.command-title {
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.command-snippet {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-snippet mark {
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.command-meta {
+  font-size: 11px;
+  color: var(--text-soft);
+  white-space: nowrap;
+}

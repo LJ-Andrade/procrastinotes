@@ -19,6 +19,8 @@ interface EditorProps {
   /** Stored content for this document (Tiptap JSON string, or legacy text). */
   initialJson: string;
   onChange: (change: EditorChange) => void;
+  /** Bumping this number asks the editor to take focus (e.g. quick capture). */
+  focusSignal?: number;
 }
 
 /**
@@ -29,7 +31,12 @@ interface EditorProps {
  *   "# "  → heading      "- "   → bullet list
  *   "1. " → ordered list  "[ ] " → checkbox (task list)
  */
-export function Editor({ docId, initialJson, onChange }: EditorProps) {
+export function Editor({
+  docId,
+  initialJson,
+  onChange,
+  focusSignal,
+}: EditorProps) {
   // Keep the latest onChange without recreating the editor instance.
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -58,6 +65,12 @@ export function Editor({ docId, initialJson, onChange }: EditorProps) {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docId, editor]);
+
+  // Take focus on request (skip the initial render, when focusSignal is 0).
+  useEffect(() => {
+    if (!editor || !focusSignal) return;
+    editor.commands.focus("end");
+  }, [focusSignal, editor]);
 
   return (
     <div className="editor-wrapper">
