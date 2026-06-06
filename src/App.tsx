@@ -5,6 +5,7 @@ import { TitleBar } from "./TitleBar";
 import { PreferencesModal } from "./PreferencesModal";
 import { CommandPalette } from "./CommandPalette";
 import { ShortcutsHelp } from "./ShortcutsHelp";
+import { SidebarList } from "./SidebarList";
 import { usePreferences } from "./preferences";
 import type { Page, Project, Section } from "./types";
 import "./App.css";
@@ -219,6 +220,61 @@ function App() {
     setPageId(page.id);
   }
 
+  // Project management
+  async function onRenameProject(id: string, name: string) {
+    await store.renameProject(id, name);
+    setProjects(await store.listProjects());
+  }
+  async function onDeleteProject(id: string) {
+    await store.deleteProject(id);
+    const list = await store.listProjects();
+    setProjects(list);
+    if (projectId === id) setProjectId(list[0]?.id ?? null);
+  }
+  async function onReorderProjects(ids: string[]) {
+    await store.reorderProjects(ids);
+    setProjects(await store.listProjects());
+  }
+
+  // Section management
+  async function onRenameSection(id: string, name: string) {
+    if (!projectId) return;
+    await store.renameSection(id, name);
+    setSections(await store.listSections(projectId));
+  }
+  async function onDeleteSection(id: string) {
+    if (!projectId) return;
+    await store.deleteSection(id);
+    const list = await store.listSections(projectId);
+    setSections(list);
+    if (sectionId === id) setSectionId(list[0]?.id ?? null);
+  }
+  async function onReorderSections(ids: string[]) {
+    if (!projectId) return;
+    await store.reorderSections(ids);
+    setSections(await store.listSections(projectId));
+  }
+
+  // Page management
+  async function onRenamePage(id: string, name: string) {
+    if (!sectionId) return;
+    await store.renamePage(id, name);
+    setPages(await store.listPages(sectionId));
+    if (id === pageId) setTitle(name);
+  }
+  async function onDeletePage(id: string) {
+    if (!sectionId) return;
+    await store.deletePage(id);
+    const list = await store.listPages(sectionId);
+    setPages(list);
+    if (pageId === id) setPageId(list[0]?.id ?? null);
+  }
+  async function onReorderPages(ids: string[]) {
+    if (!sectionId) return;
+    await store.reorderPages(ids);
+    setPages(await store.listPages(sectionId));
+  }
+
   /** Jump to a specific page, loading its project and section along the way.
       Only the pending refs that a cascading loader will actually consume are
       set, so nothing leaks into later navigation. */
@@ -252,18 +308,15 @@ function App() {
             +
           </button>
         </header>
-        <nav className="list">
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              className={`list-item ${p.id === projectId ? "active" : ""}`}
-              onClick={() => setProjectId(p.id)}
-            >
-              {p.name}
-            </button>
-          ))}
-          {projects.length === 0 && <p className="empty">No projects yet.</p>}
-        </nav>
+        <SidebarList
+          items={projects.map((p) => ({ id: p.id, label: p.name }))}
+          activeId={projectId}
+          emptyText="No projects yet."
+          onSelect={setProjectId}
+          onRename={onRenameProject}
+          onDelete={onDeleteProject}
+          onReorder={onReorderProjects}
+        />
         <button
           className="profile"
           onClick={() => setPrefsOpen(true)}
@@ -286,17 +339,14 @@ function App() {
             +
           </button>
         </header>
-        <nav className="list">
-          {sections.map((s) => (
-            <button
-              key={s.id}
-              className={`list-item ${s.id === sectionId ? "active" : ""}`}
-              onClick={() => setSectionId(s.id)}
-            >
-              {s.name}
-            </button>
-          ))}
-        </nav>
+        <SidebarList
+          items={sections.map((s) => ({ id: s.id, label: s.name }))}
+          activeId={sectionId}
+          onSelect={setSectionId}
+          onRename={onRenameSection}
+          onDelete={onDeleteSection}
+          onReorder={onReorderSections}
+        />
 
         <header className="col-header col-header-pages">
           <span>Pages</span>
@@ -309,17 +359,14 @@ function App() {
             +
           </button>
         </header>
-        <nav className="list">
-          {pages.map((p) => (
-            <button
-              key={p.id}
-              className={`list-item ${p.id === pageId ? "active" : ""}`}
-              onClick={() => setPageId(p.id)}
-            >
-              {p.title || "Untitled"}
-            </button>
-          ))}
-        </nav>
+        <SidebarList
+          items={pages.map((p) => ({ id: p.id, label: p.title || "Untitled" }))}
+          activeId={pageId}
+          onSelect={setPageId}
+          onRename={onRenamePage}
+          onDelete={onDeletePage}
+          onReorder={onReorderPages}
+        />
       </aside>
 
       <main className="col col-editor">

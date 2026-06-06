@@ -30,6 +30,7 @@ export const tauriDataStore: DataStore = {
     invoke<Page>("create_page", { sectionId, title }),
   updatePage: (id, title, contentJson, contentText) =>
     invoke("update_page", { id, title, contentJson, contentText }),
+  renamePage: (id, title) => invoke("rename_page", { id, title }),
   deletePage: (id) => invoke("delete_page", { id }),
   reorderPages: (ids) => invoke("reorder_pages", { ids }),
 

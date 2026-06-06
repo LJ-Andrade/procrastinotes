@@ -33,6 +33,7 @@ export interface DataStore {
     contentJson: string,
     contentText: string,
   ): Promise<void>;
+  renamePage(id: string, title: string): Promise<void>;
   deletePage(id: string): Promise<void>;
   reorderPages(ids: string[]): Promise<void>;
 

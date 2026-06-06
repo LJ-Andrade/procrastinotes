@@ -323,6 +323,24 @@ pub fn update_page(
     Ok(())
 }
 
+/// Renames a page (title only) without touching its content. Keeps the FTS
+/// title column in sync.
+#[tauri::command]
+pub fn rename_page(db: State<Db>, id: String, title: String) -> Result<(), String> {
+    let conn = conn!(db);
+    conn.execute(
+        "UPDATE pages SET title = ?2, updated_at = ?3 WHERE id = ?1",
+        rusqlite::params![id, title, now()],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "UPDATE pages_fts SET title = ?2 WHERE page_id = ?1",
+        rusqlite::params![id, title],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn delete_page(db: State<Db>, id: String) -> Result<(), String> {
     let conn = conn!(db);

@@ -38,6 +38,7 @@ pub fn run() {
             commands::get_page,
             commands::create_page,
             commands::update_page,
+            commands::rename_page,
             commands::delete_page,
             commands::reorder_pages,
             commands::search,
