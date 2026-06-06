@@ -30,11 +30,119 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.app {
-  display: grid;
-  grid-template-columns: 200px 240px 1fr;
+.root {
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   overflow: hidden;
+}
+
+.app {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 200px 240px 1fr;
+  overflow: hidden;
+  transition: grid-template-columns 0.2s ease;
+}
+
+/* Collapsed: the two side panels shrink to nothing, leaving just the editor. */
+.app.collapsed {
+  grid-template-columns: 0 0 1fr;
+}
+
+/* Custom title bar -------------------------------------------------------- */
+
+.titlebar {
+  flex: none;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg);
+  user-select: none;
+}
+
+.titlebar-title {
+  padding-left: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-soft);
+}
+
+.titlebar-controls {
+  display: flex;
+  height: 100%;
+}
+
+.tb-btn {
+  width: 46px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.tb-btn:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.tb-close:hover {
+  background: #e03131;
+  color: #fff;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* Action icons in the title bar (sidebar toggle, preferences). */
+.tb-icon {
+  height: 100%;
+  width: 38px;
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.tb-icon:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+/* Thin, theme-agnostic scrollbars. */
+.col::-webkit-scrollbar {
+  width: 12px;
+}
+
+.col::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.col::-webkit-scrollbar-thumb {
+  background: rgba(140, 130, 120, 0.35);
+  border: 4px solid transparent;
+  border-radius: 10px;
+  background-clip: padding-box;
+}
+
+.col::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 130, 120, 0.6);
+  background-clip: padding-box;
 }
 
 /* Columns ----------------------------------------------------------------- */
@@ -42,7 +150,7 @@ body {
 .col {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
 }
 
@@ -50,6 +158,9 @@ body {
 .col-sections {
   background: var(--bg-panel);
   border-right: 1px solid var(--border);
+  /* Clip contents while collapsing so nothing spills into the editor. */
+  overflow-x: hidden;
+  white-space: nowrap;
 }
 
 .col-header {
@@ -135,10 +246,12 @@ body {
 
 .col-editor {
   background: var(--bg);
-  /* The writing column keeps a left inset so the drag handle has room to live
-     inside the editable area (otherwise it sits outside and hides on hover). */
+  /* Horizontal insets live on the inner content (not here) so the scroll bar
+     reaches the right edge of the window. --writing-inset also gives the drag
+     handle room to live inside the editable area. */
+  --col-pad: 8%;
   --writing-inset: 30px;
-  padding: 48px 9% 24px;
+  padding: 48px 0 24px;
 }
 
 .page-title {
@@ -150,7 +263,8 @@ body {
   font-weight: 700;
   color: var(--text);
   margin-bottom: 16px;
-  padding-left: var(--writing-inset);
+  padding-left: calc(var(--col-pad) + var(--writing-inset));
+  padding-right: var(--col-pad);
 }
 
 .page-title::placeholder {
@@ -168,7 +282,8 @@ body {
 
 .editor {
   flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Drag handle: appears next to the hovered block to reorder it. */
@@ -204,9 +319,10 @@ body {
   line-height: 1.7;
   color: var(--text);
   min-height: 100%;
-  /* Room for the drag handle, kept inside the editable area so it stays
-     reachable on hover. */
-  padding-left: var(--writing-inset);
+  /* Left inset gives the drag handle room inside the editable area so it
+     stays reachable on hover; right inset keeps text off the scroll bar. */
+  padding-left: calc(var(--col-pad) + var(--writing-inset));
+  padding-right: var(--col-pad);
 }
 
 /* Each Enter starts a new paragraph with a little breathing room.
@@ -347,11 +463,16 @@ body {
   pointer-events: none;
 }
 
+/* Save indicator, pinned to the bottom-right of the window. */
 .status {
-  padding-top: 12px;
-  padding-left: var(--writing-inset);
-  font-size: 12px;
+  position: fixed;
+  right: 18px;
+  bottom: 10px;
+  font-size: 11px;
   color: var(--text-soft);
+  opacity: 0.7;
+  pointer-events: none;
+  user-select: none;
 }
 
 .placeholder {
@@ -361,9 +482,22 @@ body {
 }
 
 /* Dark mode --------------------------------------------------------------- */
+/* Theme is driven by the data-theme attribute on <html> (set from prefs).
+   "auto" (or unset) follows the system; "light"/"dark" force a choice. */
+
+:root[data-theme="dark"] {
+  --bg: #1a1917;
+  --bg-panel: #211f1d;
+  --bg-elevated: #262320;
+  --border: #322e2a;
+  --text: #e8e4dd;
+  --text-soft: #8a847b;
+  --accent: #c9a27e;
+  --accent-soft: #322b24;
+}
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
     --bg: #1a1917;
     --bg-panel: #211f1d;
     --bg-elevated: #262320;
@@ -373,4 +507,184 @@ body {
     --accent: #c9a27e;
     --accent-soft: #322b24;
   }
+}
+
+/* Profile (bottom of the projects sidebar) -------------------------------- */
+
+.profile {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.profile:hover {
+  background: var(--accent-soft);
+}
+
+.profile-avatar {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.profile-name {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Preferences modal ------------------------------------------------------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+  padding: 8px 20px 22px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 4px;
+}
+
+.modal-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pref-section {
+  margin-top: 18px;
+}
+
+.pref-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+
+.pref-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.pref-input:focus {
+  border-color: var(--accent);
+}
+
+.avatar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 17px;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.avatar:hover {
+  background: var(--accent-soft);
+}
+
+.avatar.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Segmented control (theme). */
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.seg {
+  flex: 1;
+  padding: 7px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 13px;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.seg:hover {
+  color: var(--text);
+}
+
+.seg.active {
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.swatch-row {
+  display: flex;
+  gap: 10px;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.swatch:hover {
+  transform: scale(1.1);
+}
+
+.swatch.active {
+  border-color: var(--text);
 }

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { store } from "./data";
 import { Editor, type EditorChange } from "./editor/Editor";
+import { TitleBar } from "./TitleBar";
+import { PreferencesModal } from "./PreferencesModal";
+import { usePreferences } from "./preferences";
 import type { Page, Project, Section } from "./types";
 import "./App.css";
 
@@ -19,6 +22,36 @@ function App() {
   const [title, setTitle] = useState("");
   const [pageContent, setPageContent] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const { prefs, update: updatePrefs } = usePreferences();
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem("procrastinotes.sidebar") === "collapsed",
+  );
+
+  useEffect(() => {
+    localStorage.setItem(
+      "procrastinotes.sidebar",
+      sidebarCollapsed ? "collapsed" : "expanded",
+    );
+  }, [sidebarCollapsed]);
+
+  // Global shortcuts: toggle sidebar, open preferences, close modal.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.ctrlKey && e.key === "\\") {
+        e.preventDefault();
+        setSidebarCollapsed((c) => !c);
+      } else if (e.ctrlKey && e.key === ",") {
+        e.preventDefault();
+        setPrefsOpen(true);
+      } else if (e.key === "Escape") {
+        setPrefsOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // Refs hold the freshest values so the debounced save never reads stale data.
   const saveTimer = useRef<number | null>(null);
@@ -137,8 +170,13 @@ function App() {
   // --- Render --------------------------------------------------------------
 
   return (
-    <div className="app">
-      <aside className="col col-projects">
+    <div className="root">
+      <TitleBar
+        onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
+        onOpenPreferences={() => setPrefsOpen(true)}
+      />
+      <div className={`app ${sidebarCollapsed ? "collapsed" : ""}`}>
+        <aside className="col col-projects">
         <header className="col-header">
           <span>Projects</span>
           <button className="icon-btn" onClick={addProject} title="New project">
@@ -157,6 +195,14 @@ function App() {
           ))}
           {projects.length === 0 && <p className="empty">No projects yet.</p>}
         </nav>
+        <button
+          className="profile"
+          onClick={() => setPrefsOpen(true)}
+          title="Preferences"
+        >
+          <span className="profile-avatar">{prefs.profileAvatar}</span>
+          <span className="profile-name">{prefs.profileName}</span>
+        </button>
       </aside>
 
       <aside className="col col-sections">
@@ -232,6 +278,14 @@ function App() {
           </div>
         )}
       </main>
+      </div>
+      {prefsOpen && (
+        <PreferencesModal
+          prefs={prefs}
+          update={updatePrefs}
+          onClose={() => setPrefsOpen(false)}
+        />
+      )}
     </div>
   );
 }
