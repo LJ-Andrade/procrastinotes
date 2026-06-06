@@ -135,7 +135,10 @@ body {
 
 .col-editor {
   background: var(--bg);
-  padding: 48px 12% 24px;
+  /* The writing column keeps a left inset so the drag handle has room to live
+     inside the editable area (otherwise it sits outside and hides on hover). */
+  --writing-inset: 30px;
+  padding: 48px 9% 24px;
 }
 
 .page-title {
@@ -147,6 +150,7 @@ body {
   font-weight: 700;
   color: var(--text);
   margin-bottom: 16px;
+  padding-left: var(--writing-inset);
 }
 
 .page-title::placeholder {
@@ -197,6 +201,9 @@ body {
   line-height: 1.7;
   color: var(--text);
   min-height: 100%;
+  /* Room for the drag handle, kept inside the editable area so it stays
+     reachable on hover. */
+  padding-left: var(--writing-inset);
 }
 
 .ProseMirror > * + * {
@@ -337,6 +344,7 @@ body {
 
 .status {
   padding-top: 12px;
+  padding-left: var(--writing-inset);
   font-size: 12px;
   color: var(--text-soft);
 }
