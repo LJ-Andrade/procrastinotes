@@ -1,4 +1,5 @@
 import { useEditor, EditorContent, type JSONContent } from "@tiptap/react";
+import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
@@ -58,7 +59,25 @@ export function Editor({ docId, initialJson, onChange }: EditorProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docId, editor]);
 
-  return <EditorContent editor={editor} className="editor" />;
+  return (
+    <div className="editor-wrapper">
+      {editor && (
+        <DragHandle editor={editor}>
+          <div className="drag-handle" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="5.5" cy="3.5" r="1.4" />
+              <circle cx="10.5" cy="3.5" r="1.4" />
+              <circle cx="5.5" cy="8" r="1.4" />
+              <circle cx="10.5" cy="8" r="1.4" />
+              <circle cx="5.5" cy="12.5" r="1.4" />
+              <circle cx="10.5" cy="12.5" r="1.4" />
+            </svg>
+          </div>
+        </DragHandle>
+      )}
+      <EditorContent editor={editor} className="editor" />
+    </div>
+  );
 }
 
 /**
