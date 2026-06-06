@@ -6,6 +6,7 @@ import { TitleBar } from "./TitleBar";
 import { PreferencesModal } from "./PreferencesModal";
 import { CommandPalette } from "./CommandPalette";
 import { ShortcutsHelp } from "./ShortcutsHelp";
+import { FindBar } from "./FindBar";
 import { SidebarList } from "./SidebarList";
 import { usePreferences } from "./preferences";
 import type { Page, Project, Section } from "./types";
@@ -43,6 +44,7 @@ function App() {
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
   // Bumped to ask the editor to take focus (used by quick capture).
   const [focusSignal, setFocusSignal] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
@@ -78,6 +80,14 @@ function App() {
       } else if (e.ctrlKey && e.key === ",") {
         e.preventDefault();
         setPrefsOpen(true);
+      } else if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        saveNow();
+      } else if (e.ctrlKey && (e.key === "f" || e.key === "F")) {
+        if (pageIdRef.current) {
+          e.preventDefault();
+          setFindOpen(true);
+        }
       } else if (e.key === "?" && !isTyping(e.target)) {
         e.preventDefault();
         setHelpOpen(true);
@@ -169,26 +179,34 @@ function App() {
 
   // --- Autosave ------------------------------------------------------------
 
+  const persistNow = useCallback(async () => {
+    const id = pageIdRef.current;
+    if (!id) return;
+    const nextTitle = titleRef.current;
+    await store.updatePage(
+      id,
+      nextTitle,
+      contentRef.current.json,
+      contentRef.current.text,
+    );
+    setPages((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, title: nextTitle } : p)),
+    );
+    setSaving(false);
+  }, []);
+
   const scheduleSave = useCallback(() => {
     if (!pageIdRef.current) return;
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     setSaving(true);
-    saveTimer.current = window.setTimeout(async () => {
-      const id = pageIdRef.current;
-      if (!id) return;
-      const nextTitle = titleRef.current;
-      await store.updatePage(
-        id,
-        nextTitle,
-        contentRef.current.json,
-        contentRef.current.text,
-      );
-      setPages((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, title: nextTitle } : p)),
-      );
-      setSaving(false);
-    }, AUTOSAVE_DELAY);
-  }, []);
+    saveTimer.current = window.setTimeout(persistNow, AUTOSAVE_DELAY);
+  }, [persistNow]);
+
+  // Ctrl+S: flush any pending save immediately (autosave already covers it).
+  const saveNow = useCallback(() => {
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    void persistNow();
+  }, [persistNow]);
 
   function onEditorChange(change: EditorChange) {
     contentRef.current = change;
@@ -446,6 +464,7 @@ function App() {
           onClose={() => setCommandOpen(false)}
         />
       )}
+      {findOpen && pageId && <FindBar onClose={() => setFindOpen(false)} />}
       {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
       {prefsOpen && (
         <PreferencesModal

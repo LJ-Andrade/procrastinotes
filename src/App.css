@@ -930,6 +930,70 @@ body {
   color: var(--text-soft);
 }
 
+/* Find in page ------------------------------------------------------------ */
+
+.find-bar {
+  position: fixed;
+  top: 44px;
+  right: 18px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.find-input {
+  width: 180px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  padding: 4px 6px;
+}
+
+.find-count {
+  font-size: 12px;
+  color: var(--text-soft);
+  min-width: 38px;
+  text-align: center;
+}
+
+.find-nav {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.find-nav:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.find-nav:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+::highlight(find) {
+  background: rgba(255, 210, 0, 0.32);
+}
+
+::highlight(find-current) {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* Keyboard shortcuts help ------------------------------------------------- */
 
 .shortcut-list {

@@ -9,6 +9,8 @@ const GROUPS: ShortcutGroup[] = [
     items: [
       { keys: ["Ctrl", "K"], label: "Command palette / search" },
       { keys: ["Ctrl", "N"], label: "New page (quick capture)" },
+      { keys: ["Ctrl", "F"], label: "Find on page" },
+      { keys: ["Ctrl", "S"], label: "Save now" },
       { keys: ["Ctrl", "\\"], label: "Toggle sidebar" },
       { keys: ["Ctrl", ","], label: "Preferences" },
       { keys: ["?"], label: "This help" },
