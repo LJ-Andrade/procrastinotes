@@ -242,6 +242,7 @@ function App() {
       <TitleBar
         onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
         onOpenPreferences={() => setPrefsOpen(true)}
+        onShowHelp={() => setHelpOpen(true)}
       />
       <div className={`app ${sidebarCollapsed ? "collapsed" : ""}`}>
         <aside className="col col-projects">

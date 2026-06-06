@@ -1,5 +1,6 @@
 import { useEditor, EditorContent, type JSONContent } from "@tiptap/react";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
+import { EditorToolbar } from "./EditorToolbar";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
@@ -74,6 +75,7 @@ export function Editor({
 
   return (
     <div className="editor-wrapper">
+      {editor && <EditorToolbar editor={editor} />}
       {editor && (
         <DragHandle editor={editor} nested>
           <svg

@@ -280,6 +280,73 @@ body {
   flex-direction: column;
 }
 
+/* Formatting toolbar (above the editor content). */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1px;
+  margin-bottom: 14px;
+  padding-left: calc(var(--col-pad) + var(--writing-inset));
+  padding-right: var(--col-pad);
+}
+
+.fmt-btn {
+  height: 30px;
+  min-width: 30px;
+  padding: 0 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.fmt-btn:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.fmt-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.fmt-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 5px;
+}
+
+.fmt-b {
+  font-weight: 800;
+}
+
+.fmt-i {
+  font-style: italic;
+  font-family: Georgia, serif;
+}
+
+.fmt-s {
+  text-decoration: line-through;
+}
+
+.fmt-ol {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fmt-code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+}
+
 .editor {
   flex: 1;
   display: flex;

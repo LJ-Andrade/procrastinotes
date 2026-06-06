@@ -5,6 +5,7 @@ const appWindow = getCurrentWindow();
 interface TitleBarProps {
   onToggleSidebar: () => void;
   onOpenPreferences: () => void;
+  onShowHelp: () => void;
 }
 
 /**
@@ -12,7 +13,11 @@ interface TitleBarProps {
  * tauri.conf.json) so the bar blends with the app background. The bar itself
  * is the drag region; the buttons drive window controls and app actions.
  */
-export function TitleBar({ onToggleSidebar, onOpenPreferences }: TitleBarProps) {
+export function TitleBar({
+  onToggleSidebar,
+  onOpenPreferences,
+  onShowHelp,
+}: TitleBarProps) {
   return (
     <div className="titlebar" data-tauri-drag-region>
       <div className="titlebar-left">
@@ -41,6 +46,22 @@ export function TitleBar({ onToggleSidebar, onOpenPreferences }: TitleBarProps) 
       </div>
 
       <div className="titlebar-controls">
+        <button
+          className="tb-icon"
+          onClick={onShowHelp}
+          aria-label="Keyboard shortcuts"
+          title="Keyboard shortcuts (?)"
+        >
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6.5" stroke="currentColor" />
+            <path
+              d="M6.2 6.2 C6.2 5 7 4.4 8 4.4 C9 4.4 9.8 5 9.8 6 C9.8 7 9 7.3 8 8 L8 9"
+              stroke="currentColor"
+              strokeWidth="1.1"
+            />
+            <circle cx="8" cy="11.2" r="0.8" fill="currentColor" />
+          </svg>
+        </button>
         <button
           className="tb-icon"
           onClick={onOpenPreferences}
