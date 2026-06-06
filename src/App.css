@@ -206,8 +206,14 @@ body {
   padding-left: var(--writing-inset);
 }
 
+/* Tight spacing between blocks for a notepad feel. Headings and lists keep
+   their own (larger) margins via the more specific rules below. */
 .ProseMirror > * + * {
-  margin-top: 0.7em;
+  margin-top: 0.3em;
+}
+
+.ProseMirror p {
+  margin: 0;
 }
 
 .ProseMirror h1 {
