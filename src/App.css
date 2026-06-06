@@ -341,14 +341,14 @@ body {
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 120px,
-    #000 270px
+    transparent 60px,
+    #000 185px
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 120px,
-    #000 270px
+    transparent 60px,
+    #000 185px
   );
 }
 
