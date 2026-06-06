@@ -7,6 +7,7 @@ import { PreferencesModal } from "./PreferencesModal";
 import { CommandPalette } from "./CommandPalette";
 import { ShortcutsHelp } from "./ShortcutsHelp";
 import { FindBar } from "./FindBar";
+import { Ambient } from "./Ambient";
 import { SidebarList } from "./SidebarList";
 import { usePreferences } from "./preferences";
 import type { Page, Project, Section } from "./types";
@@ -348,6 +349,7 @@ function App() {
 
   return (
     <div className="root">
+      {prefs.ambient && <Ambient />}
       <TitleBar
         onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
         onOpenPreferences={() => setPrefsOpen(true)}

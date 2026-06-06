@@ -85,6 +85,22 @@ export function PreferencesModal({
         </section>
 
         <section className="pref-section">
+          <span className="pref-label">Ambient</span>
+          <label className="toggle-row">
+            <span>Floating particles</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={prefs.ambient}
+              className={`toggle ${prefs.ambient ? "on" : ""}`}
+              onClick={() => update({ ambient: !prefs.ambient })}
+            >
+              <span className="toggle-knob" />
+            </button>
+          </label>
+        </section>
+
+        <section className="pref-section">
           <span className="pref-label">Backup</span>
           <div className="pref-buttons">
             <button className="pref-button" onClick={onExportBackup}>

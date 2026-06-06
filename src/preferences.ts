@@ -10,6 +10,8 @@ export interface Preferences {
   profileName: string;
   /** Emoji avatar. */
   profileAvatar: string;
+  /** Subtle floating particles. Off by default to keep things calm. */
+  ambient: boolean;
 }
 
 export const ACCENTS: { id: string; label: string; color: string; soft: string }[] =
@@ -30,6 +32,7 @@ const DEFAULTS: Preferences = {
   accent: "clay",
   profileName: "You",
   profileAvatar: "🦊",
+  ambient: false,
 };
 
 function load(): Preferences {
