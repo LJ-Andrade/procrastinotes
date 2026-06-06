@@ -456,22 +456,18 @@ fn sql_quote(path: &str) -> String {
 
 /// Writes a clean, self-contained snapshot of the database to `path`.
 /// Uses `VACUUM INTO`, which captures all committed data (WAL included).
-#[tauri::command]
-pub fn export_backup(db: State<Db>, path: String) -> Result<(), String> {
-    let conn = conn!(db);
+pub fn export_snapshot(conn: &rusqlite::Connection, path: &str) -> Result<(), String> {
     // VACUUM INTO requires the destination not to exist yet.
-    let _ = std::fs::remove_file(&path);
-    conn.execute_batch(&format!("VACUUM INTO '{}';", sql_quote(&path)))
+    let _ = std::fs::remove_file(path);
+    conn.execute_batch(&format!("VACUUM INTO '{}';", sql_quote(path)))
         .map_err(|e| e.to_string())?;
     Ok(())
 }
 
-/// Replaces all data with the contents of the backup file at `path`.
+/// Replaces all data with the contents of the database file at `path`.
 /// Destructive: the caller must confirm with the user first.
-#[tauri::command]
-pub fn import_backup(db: State<Db>, path: String) -> Result<(), String> {
-    let mut conn = conn!(db);
-    conn.execute_batch(&format!("ATTACH DATABASE '{}' AS src;", sql_quote(&path)))
+pub fn import_snapshot(conn: &mut rusqlite::Connection, path: &str) -> Result<(), String> {
+    conn.execute_batch(&format!("ATTACH DATABASE '{}' AS src;", sql_quote(path)))
         .map_err(|e| format!("Could not open backup: {e}"))?;
 
     let result = (|| -> rusqlite::Result<()> {
@@ -510,4 +506,16 @@ pub fn import_backup(db: State<Db>, path: String) -> Result<(), String> {
     let _ = conn.execute_batch("DETACH DATABASE src;");
     result.map_err(|e| format!("Import failed: {e}"))?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn export_backup(db: State<Db>, path: String) -> Result<(), String> {
+    let conn = conn!(db);
+    export_snapshot(&conn, &path)
+}
+
+#[tauri::command]
+pub fn import_backup(db: State<Db>, path: String) -> Result<(), String> {
+    let mut conn = conn!(db);
+    import_snapshot(&mut conn, &path)
 }

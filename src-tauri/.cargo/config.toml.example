@@ -1,0 +1,7 @@
+# Copy this file to `config.toml` (same folder) and fill in your Google OAuth
+# "Desktop app" client. `config.toml` is gitignored so secrets stay out of the
+# repo. These values are injected into the build for Drive sync; without them,
+# the app still builds and runs, but Drive sync stays disabled.
+[env]
+PROCRASTINOTES_GOOGLE_CLIENT_ID = "your-client-id.apps.googleusercontent.com"
+PROCRASTINOTES_GOOGLE_CLIENT_SECRET = "your-client-secret"

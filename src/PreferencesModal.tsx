@@ -5,6 +5,7 @@ import {
   type Theme,
 } from "./preferences";
 import { BACKGROUNDS } from "./backgrounds";
+import type { SyncStatus } from "./types";
 
 interface PreferencesModalProps {
   prefs: Preferences;
@@ -12,6 +13,11 @@ interface PreferencesModalProps {
   onExportBackup: () => void;
   onImportBackup: () => void;
   onPickBackground: () => void;
+  syncStatus: SyncStatus | null;
+  syncing: boolean;
+  onConnectDrive: () => void;
+  onDisconnectDrive: () => void;
+  onSyncNow: () => void;
   onClose: () => void;
 }
 
@@ -23,6 +29,11 @@ export function PreferencesModal({
   onExportBackup,
   onImportBackup,
   onPickBackground,
+  syncStatus,
+  syncing,
+  onConnectDrive,
+  onDisconnectDrive,
+  onSyncNow,
   onClose,
 }: PreferencesModalProps) {
   return (
@@ -158,6 +169,39 @@ export function PreferencesModal({
               Import…
             </button>
           </div>
+        </section>
+
+        <section className="pref-section">
+          <span className="pref-label">Sync (Google Drive)</span>
+          {syncStatus?.connected ? (
+            <>
+              <p className="sync-info">
+                {syncStatus.email ?? "Connected"}
+                {syncStatus.lastSync && (
+                  <span className="sync-time">
+                    {" · last sync "}
+                    {new Date(syncStatus.lastSync).toLocaleString()}
+                  </span>
+                )}
+              </p>
+              <div className="pref-buttons">
+                <button
+                  className="pref-button"
+                  onClick={onSyncNow}
+                  disabled={syncing}
+                >
+                  {syncing ? "Syncing…" : "Sync now"}
+                </button>
+                <button className="pref-button" onClick={onDisconnectDrive}>
+                  Disconnect
+                </button>
+              </div>
+            </>
+          ) : (
+            <button className="pref-button primary" onClick={onConnectDrive}>
+              Connect Google Drive
+            </button>
+          )}
         </section>
         </div>
 

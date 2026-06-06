@@ -57,11 +57,18 @@ Pull replaces the local DB via the import path; push uploads a fresh
 6. Persist the refresh token in the app data dir (`sync.json`). Refresh the
    access token on demand.
 
-The OAuth **Client ID + secret** (a "Desktop app" client) are baked into the
-build. For an installed app the secret is not confidential. The Google OAuth
-consent screen should be set to **"In production"** so refresh tokens do not
-expire after 7 days (the "Testing" limitation); the unverified-app warning is
-expected and harmless for personal use.
+The OAuth **Client ID + secret** (a "Desktop app" client) are injected into the
+build at compile time from a **gitignored** file so they stay out of the public
+repo: `src-tauri/.cargo/config.toml` (`[env]` with
+`PROCRASTINOTES_GOOGLE_CLIENT_ID` / `PROCRASTINOTES_GOOGLE_CLIENT_SECRET`). Copy
+`src-tauri/.cargo/config.toml.example` to `config.toml` and fill it in — do this
+on every machine you build on. Without it the app still builds and runs, but
+Drive sync stays disabled (the constants read empty via `option_env!`).
+
+For an installed app the secret is not confidential (it also ends up inside the
+binary). The Google OAuth consent screen should be set to **"In production"** so
+refresh tokens do not expire after 7 days (the "Testing" limitation); the
+unverified-app warning is expected and harmless for personal use.
 
 ### Drive REST calls used
 - List: `GET /drive/v3/files?spaces=appDataFolder&fields=files(id,name,modifiedTime,appProperties)`

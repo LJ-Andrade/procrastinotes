@@ -1,4 +1,11 @@
-import type { Page, Project, SearchHit, Section } from "../types";
+import type {
+  Page,
+  Project,
+  SearchHit,
+  Section,
+  SyncOutcome,
+  SyncStatus,
+} from "../types";
 
 /**
  * The single boundary between the UI and persistence.
@@ -49,4 +56,15 @@ export interface DataStore {
   // Images
   /** Read an image file and return it as a `data:` URL. */
   readImageDataUrl(path: string): Promise<string>;
+
+  // Drive sync
+  driveStatus(): Promise<SyncStatus>;
+  driveConnect(): Promise<SyncStatus>;
+  driveDisconnect(): Promise<void>;
+  /** Flag that local data changed since the last sync. */
+  syncMarkDirty(): Promise<void>;
+  /** Run a sync pass; returns what happened. */
+  syncNow(): Promise<SyncOutcome>;
+  /** Resolve a conflict by keeping one side. */
+  syncResolve(keep: "local" | "remote"): Promise<SyncOutcome>;
 }

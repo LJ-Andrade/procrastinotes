@@ -866,6 +866,33 @@ body {
   background: #c92a2a;
 }
 
+.btn-accent {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+
+.btn-accent:hover {
+  filter: brightness(1.06);
+}
+
+.sync-info {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--text-soft);
+  word-break: break-word;
+}
+
+.sync-time {
+  opacity: 0.85;
+}
+
 .pref-section {
   margin-top: 18px;
 }

@@ -1,6 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { DataStore } from "./DataStore";
-import type { Page, Project, SearchHit, Section } from "../types";
+import type {
+  Page,
+  Project,
+  SearchHit,
+  Section,
+  SyncOutcome,
+  SyncStatus,
+} from "../types";
 
 /**
  * DataStore implementation backed by the Rust + SQLite layer.
@@ -43,4 +50,12 @@ export const tauriDataStore: DataStore = {
 
   // Images
   readImageDataUrl: (path) => invoke<string>("read_image_data_url", { path }),
+
+  // Drive sync
+  driveStatus: () => invoke<SyncStatus>("drive_status"),
+  driveConnect: () => invoke<SyncStatus>("drive_connect"),
+  driveDisconnect: () => invoke("drive_disconnect"),
+  syncMarkDirty: () => invoke("sync_mark_dirty"),
+  syncNow: () => invoke<SyncOutcome>("sync_now"),
+  syncResolve: (keep) => invoke<SyncOutcome>("sync_resolve", { keep }),
 };

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { save, open } from "@tauri-apps/plugin-dialog";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { store } from "./data";
+import type { SyncStatus } from "./types";
 import { Editor, type EditorChange } from "./editor/Editor";
 import { TitleBar } from "./TitleBar";
 import { PreferencesModal } from "./PreferencesModal";
@@ -49,6 +51,14 @@ function App() {
   const [findOpen, setFindOpen] = useState(false);
   // Data URL for a custom background image (loaded from disk via Rust).
   const [customBgUrl, setCustomBgUrl] = useState("");
+
+  // Drive sync
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
+  const syncStatusRef = useRef<SyncStatus | null>(null);
+  syncStatusRef.current = syncStatus;
+  const syncTimer = useRef<number | null>(null);
   // Bumped to ask the editor to take focus (used by quick capture).
   const [focusSignal, setFocusSignal] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
@@ -234,6 +244,114 @@ function App() {
   function onEditorChange(change: EditorChange) {
     contentRef.current = change;
     scheduleSave();
+    notifyChange();
+  }
+
+  // --- Drive sync ----------------------------------------------------------
+
+  const reloadAll = useCallback(async () => {
+    setSectionId(null);
+    setPageId(null);
+    const list = await store.listProjects();
+    setProjects(list);
+    setProjectId(list[0]?.id ?? null);
+  }, []);
+
+  const runSync = useCallback(async () => {
+    if (!syncStatusRef.current?.connected) return;
+    setSyncing(true);
+    try {
+      const outcome = await store.syncNow();
+      if (outcome === "conflict") {
+        setConflictOpen(true);
+      } else if (outcome === "pulled") {
+        await reloadAll();
+      }
+    } catch (e) {
+      console.error("Sync failed", e);
+    } finally {
+      setSyncing(false);
+      try {
+        setSyncStatus(await store.driveStatus());
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [reloadAll]);
+
+  // Mark local data dirty and schedule a debounced push.
+  const notifyChange = useCallback(() => {
+    if (!syncStatusRef.current?.connected) return;
+    store.syncMarkDirty().catch(() => {});
+    if (syncTimer.current) window.clearTimeout(syncTimer.current);
+    syncTimer.current = window.setTimeout(() => void runSync(), 2500);
+  }, [runSync]);
+
+  // On startup: load sync status and pull if connected.
+  useEffect(() => {
+    store
+      .driveStatus()
+      .then((s) => {
+        setSyncStatus(s);
+        if (s.connected) void runSync();
+      })
+      .catch(() => {});
+  }, [runSync]);
+
+  // Push any pending changes before the window closes.
+  useEffect(() => {
+    const win = getCurrentWindow();
+    let unlisten: (() => void) | undefined;
+    win
+      .onCloseRequested(async (event) => {
+        const s = syncStatusRef.current;
+        if (s?.connected && s.dirty) {
+          event.preventDefault();
+          try {
+            await runSync();
+          } catch {
+            /* ignore */
+          }
+          await win.destroy();
+        }
+      })
+      .then((u) => {
+        unlisten = u;
+      });
+    return () => unlisten?.();
+  }, [runSync]);
+
+  async function connectDrive() {
+    try {
+      const s = await store.driveConnect();
+      setSyncStatus(s);
+      await runSync();
+    } catch (e) {
+      alert(`Could not connect: ${e}`);
+    }
+  }
+
+  async function disconnectDrive() {
+    await store.driveDisconnect();
+    setSyncStatus(await store.driveStatus());
+  }
+
+  async function resolveConflict(keep: "local" | "remote") {
+    setConflictOpen(false);
+    setSyncing(true);
+    try {
+      const outcome = await store.syncResolve(keep);
+      if (outcome === "pulled") await reloadAll();
+    } catch (e) {
+      console.error("Resolve failed", e);
+    } finally {
+      setSyncing(false);
+      try {
+        setSyncStatus(await store.driveStatus());
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   // --- Actions -------------------------------------------------------------
@@ -244,6 +362,7 @@ function App() {
     const project = await store.createProject(name);
     await loadProjects();
     setProjectId(project.id);
+    notifyChange();
   }
 
   async function addSection() {
@@ -253,6 +372,7 @@ function App() {
     const section = await store.createSection(projectId, name);
     setSections(await store.listSections(projectId));
     setSectionId(section.id);
+    notifyChange();
   }
 
   async function addPage() {
@@ -260,22 +380,26 @@ function App() {
     const page = await store.createPage(sectionId, "Untitled");
     setPages(await store.listPages(sectionId));
     setPageId(page.id);
+    notifyChange();
   }
 
   // Project management
   async function onRenameProject(id: string, name: string) {
     await store.renameProject(id, name);
     setProjects(await store.listProjects());
+    notifyChange();
   }
   async function onDeleteProject(id: string) {
     await store.deleteProject(id);
     const list = await store.listProjects();
     setProjects(list);
     if (projectId === id) setProjectId(list[0]?.id ?? null);
+    notifyChange();
   }
   async function onReorderProjects(ids: string[]) {
     await store.reorderProjects(ids);
     setProjects(await store.listProjects());
+    notifyChange();
   }
 
   // Section management
@@ -283,6 +407,7 @@ function App() {
     if (!projectId) return;
     await store.renameSection(id, name);
     setSections(await store.listSections(projectId));
+    notifyChange();
   }
   async function onDeleteSection(id: string) {
     if (!projectId) return;
@@ -290,11 +415,13 @@ function App() {
     const list = await store.listSections(projectId);
     setSections(list);
     if (sectionId === id) setSectionId(list[0]?.id ?? null);
+    notifyChange();
   }
   async function onReorderSections(ids: string[]) {
     if (!projectId) return;
     await store.reorderSections(ids);
     setSections(await store.listSections(projectId));
+    notifyChange();
   }
 
   // Page management
@@ -303,6 +430,7 @@ function App() {
     await store.renamePage(id, name);
     setPages(await store.listPages(sectionId));
     if (id === pageId) setTitle(name);
+    notifyChange();
   }
   async function onDeletePage(id: string) {
     if (!sectionId) return;
@@ -310,11 +438,13 @@ function App() {
     const list = await store.listPages(sectionId);
     setPages(list);
     if (pageId === id) setPageId(list[0]?.id ?? null);
+    notifyChange();
   }
   async function onReorderPages(ids: string[]) {
     if (!sectionId) return;
     await store.reorderPages(ids);
     setPages(await store.listPages(sectionId));
+    notifyChange();
   }
 
   // Backup
@@ -480,6 +610,7 @@ function App() {
                 onChange={(e) => {
                   setTitle(e.target.value);
                   scheduleSave();
+                  notifyChange();
                 }}
               />
               <Editor
@@ -490,6 +621,8 @@ function App() {
               />
               <footer className="status">
                 {saving ? "Saving…" : "Saved"}
+                {syncStatus?.connected &&
+                  (syncing ? " · Syncing…" : " · Synced")}
               </footer>
             </>
           ) : (
@@ -517,6 +650,31 @@ function App() {
       )}
       {findOpen && pageId && <FindBar onClose={() => setFindOpen(false)} />}
       {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
+      {conflictOpen && (
+        <div className="modal-overlay">
+          <div className="confirm" onClick={(e) => e.stopPropagation()}>
+            <h3 className="confirm-title">Sync conflict</h3>
+            <p className="confirm-message">
+              This computer and Drive both changed since the last sync. Which
+              version do you want to keep? A backup of the other one is saved.
+            </p>
+            <div className="confirm-actions">
+              <button
+                className="btn-ghost"
+                onClick={() => resolveConflict("remote")}
+              >
+                Keep Drive
+              </button>
+              <button
+                className="btn-accent"
+                onClick={() => resolveConflict("local")}
+              >
+                Keep this computer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {prefsOpen && (
         <PreferencesModal
           prefs={prefs}
@@ -524,6 +682,11 @@ function App() {
           onExportBackup={exportBackup}
           onImportBackup={importBackup}
           onPickBackground={pickBackground}
+          syncStatus={syncStatus}
+          syncing={syncing}
+          onConnectDrive={connectDrive}
+          onDisconnectDrive={disconnectDrive}
+          onSyncNow={runSync}
           onClose={() => setPrefsOpen(false)}
         />
       )}

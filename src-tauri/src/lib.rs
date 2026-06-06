@@ -1,6 +1,7 @@
 mod commands;
 mod db;
 mod models;
+mod sync;
 
 use db::Db;
 use std::sync::Mutex;
@@ -46,6 +47,12 @@ pub fn run() {
             commands::read_image_data_url,
             commands::export_backup,
             commands::import_backup,
+            sync::drive_status,
+            sync::drive_connect,
+            sync::drive_disconnect,
+            sync::sync_mark_dirty,
+            sync::sync_now,
+            sync::sync_resolve,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

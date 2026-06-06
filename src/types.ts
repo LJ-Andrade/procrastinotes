@@ -46,3 +46,18 @@ export interface SearchHit {
   title: string;
   snippet: string;
 }
+
+export interface SyncStatus {
+  connected: boolean;
+  email: string | null;
+  lastSync: string | null;
+  dirty: boolean;
+}
+
+/** Result of a sync run. */
+export type SyncOutcome =
+  | "pushed"
+  | "pulled"
+  | "upToDate"
+  | "conflict"
+  | "disconnected";
