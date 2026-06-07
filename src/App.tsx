@@ -292,6 +292,10 @@ function App() {
     store
       .driveStatus()
       .then((s) => {
+        // Keep the ref in sync before calling runSync — setSyncStatus only
+        // updates the ref on the next render commit, so runSync would otherwise
+        // see a stale null and bail out, silently skipping the startup pull.
+        syncStatusRef.current = s;
         setSyncStatus(s);
         if (s.connected) void runSync();
       })
@@ -307,8 +311,14 @@ function App() {
         const s = syncStatusRef.current;
         if (s?.connected && s.dirty) {
           event.preventDefault();
+          // Best-effort push before closing — bounded so a hung network call
+          // can never trap the user inside the app. The dirty flag persists,
+          // so the next launch will push anyway.
           try {
-            await runSync();
+            await Promise.race([
+              runSync(),
+              new Promise((resolve) => setTimeout(resolve, 3000)),
+            ]);
           } catch {
             /* ignore */
           }
@@ -324,6 +334,7 @@ function App() {
   async function connectDrive() {
     try {
       const s = await store.driveConnect();
+      syncStatusRef.current = s;
       setSyncStatus(s);
       await runSync();
     } catch (e) {
