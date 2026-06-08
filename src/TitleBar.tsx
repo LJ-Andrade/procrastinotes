@@ -13,14 +13,12 @@ const ICON_URL = Object.values(iconModules)[0];
 
 interface TitleBarProps {
   labels: {
-    toggleSidebar: string;
     keyboardShortcuts: string;
     preferences: string;
     minimize: string;
     maximize: string;
     close: string;
   };
-  onToggleSidebar: () => void;
   onOpenPreferences: () => void;
   onShowHelp: () => void;
 }
@@ -32,32 +30,12 @@ interface TitleBarProps {
  */
 export function TitleBar({
   labels,
-  onToggleSidebar,
   onOpenPreferences,
   onShowHelp,
 }: TitleBarProps) {
   return (
     <div className="titlebar" data-tauri-drag-region>
       <div className="titlebar-left">
-        <button
-          className="tb-icon"
-          onClick={onToggleSidebar}
-          aria-label={labels.toggleSidebar}
-          title={`${labels.toggleSidebar} (Ctrl+\\)`}
-        >
-          <svg width="15" height="15" viewBox="0 0 16 16">
-            <rect
-              x="1.5"
-              y="2.5"
-              width="13"
-              height="11"
-              rx="1.5"
-              fill="none"
-              stroke="currentColor"
-            />
-            <line x1="6" y1="2.5" x2="6" y2="13.5" stroke="currentColor" />
-          </svg>
-        </button>
         {ICON_URL && (
           <img className="titlebar-icon" src={ICON_URL} alt="" data-tauri-drag-region />
         )}

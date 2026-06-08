@@ -72,6 +72,7 @@ function App() {
   const syncStatusRef = useRef<SyncStatus | null>(null);
   syncStatusRef.current = syncStatus;
   const syncTimer = useRef<number | null>(null);
+  const allowWindowCloseRef = useRef(false);
   // Bumped to ask the editor to take focus (used by quick capture).
   const [focusSignal, setFocusSignal] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
@@ -325,6 +326,8 @@ function App() {
     let unlisten: (() => void) | undefined;
     win
       .onCloseRequested(async (event) => {
+        if (allowWindowCloseRef.current) return;
+
         const s = syncStatusRef.current;
         if (s?.connected && s.dirty) {
           event.preventDefault();
@@ -339,7 +342,8 @@ function App() {
           } catch {
             /* ignore */
           }
-          await win.destroy();
+          allowWindowCloseRef.current = true;
+          await win.close();
         }
       })
       .then((u) => {
@@ -545,14 +549,55 @@ function App() {
     <div className="root">
       <TitleBar
         labels={strings.titleBar}
-        onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
         onOpenPreferences={() => setPrefsOpen(true)}
         onShowHelp={() => setHelpOpen(true)}
       />
+      {sidebarCollapsed && (
+        <button
+          className="floating-sidebar-toggle"
+          onClick={() => setSidebarCollapsed(false)}
+          aria-label={strings.titleBar.toggleSidebar}
+          title={`${strings.titleBar.toggleSidebar} (Ctrl+\\)`}
+        >
+          <svg width="15" height="15" viewBox="0 0 16 16">
+            <rect
+              x="1.5"
+              y="2.5"
+              width="13"
+              height="11"
+              rx="1.5"
+              fill="none"
+              stroke="currentColor"
+            />
+            <line x1="6" y1="2.5" x2="6" y2="13.5" stroke="currentColor" />
+          </svg>
+        </button>
+      )}
       <div className={`app ${sidebarCollapsed ? "collapsed" : ""}`}>
         <aside className="col col-projects">
         <header className="col-header">
-          <span>{strings.app.projects}</span>
+          <div className="col-header-title-group">
+            <button
+              className="col-header-toggle"
+              onClick={() => setSidebarCollapsed((c) => !c)}
+              aria-label={strings.titleBar.toggleSidebar}
+              title={`${strings.titleBar.toggleSidebar} (Ctrl+\\)`}
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16">
+                <rect
+                  x="1.5"
+                  y="2.5"
+                  width="13"
+                  height="11"
+                  rx="1.5"
+                  fill="none"
+                  stroke="currentColor"
+                />
+                <line x1="6" y1="2.5" x2="6" y2="13.5" stroke="currentColor" />
+              </svg>
+            </button>
+            <span>{strings.app.projects}</span>
+          </div>
           <button
             className="icon-btn"
             onClick={() => setCreateDialog("project")}
