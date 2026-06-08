@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConfirmDialog } from "./ConfirmDialog";
+import type { Strings } from "./i18n";
 
 export interface SidebarEntry {
   id: string;
@@ -7,6 +8,7 @@ export interface SidebarEntry {
 }
 
 interface SidebarListProps {
+  strings: Strings["dialogs"];
   items: SidebarEntry[];
   activeId: string | null;
   emptyText?: string;
@@ -22,6 +24,7 @@ interface SidebarListProps {
  * projects, sections and pages.
  */
 export function SidebarList({
+  strings,
   items,
   activeId,
   emptyText,
@@ -119,7 +122,7 @@ export function SidebarList({
                 </button>
                 <button
                   className="item-del"
-                  title="Delete"
+                  title={strings.deleteTitle(item.label)}
                   onClick={() => setPendingDelete(item)}
                 >
                   ×
@@ -132,8 +135,10 @@ export function SidebarList({
     </div>
     {pendingDelete && (
       <ConfirmDialog
-        title={`Delete “${pendingDelete.label}”?`}
-        message="This can't be undone from the app."
+        title={strings.deleteTitle(pendingDelete.label)}
+        message={strings.deleteMessage}
+        confirmLabel={strings.delete}
+        cancelLabel={strings.cancel}
         onConfirm={() => {
           onDelete(pendingDelete.id);
           setPendingDelete(null);

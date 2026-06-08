@@ -1,48 +1,25 @@
-interface ShortcutGroup {
-  title: string;
-  items: { keys: string[]; label: string }[];
-}
+import type { Strings } from "./i18n";
 
-const GROUPS: ShortcutGroup[] = [
-  {
-    title: "General",
-    items: [
-      { keys: ["Ctrl", "K"], label: "Command palette / search" },
-      { keys: ["Ctrl", "N"], label: "New page (quick capture)" },
-      { keys: ["Ctrl", "F"], label: "Find on page" },
-      { keys: ["Ctrl", "S"], label: "Save now" },
-      { keys: ["Ctrl", "\\"], label: "Toggle sidebar" },
-      { keys: ["Ctrl", ","], label: "Preferences" },
-      { keys: ["?"], label: "This help" },
-      { keys: ["Esc"], label: "Close dialogs" },
-    ],
-  },
-  {
-    title: "Writing",
-    items: [
-      { keys: ["Ctrl", "B"], label: "Bold" },
-      { keys: ["Ctrl", "I"], label: "Italic" },
-      { keys: ["#", "Space"], label: "Heading" },
-      { keys: ["-", "Space"], label: "Bullet list" },
-      { keys: ["1", ".", "Space"], label: "Numbered list" },
-      { keys: ["[ ]", "Space"], label: "Checkbox" },
-      { keys: ["Shift", "Enter"], label: "Line break (no new paragraph)" },
-    ],
-  },
-];
-
-export function ShortcutsHelp({ onClose }: { onClose: () => void }) {
+export function ShortcutsHelp({
+  strings,
+  closeLabel,
+  onClose,
+}: {
+  strings: Strings["shortcuts"];
+  closeLabel: string;
+  onClose: () => void;
+}) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <header className="modal-header">
-          <h2>Keyboard shortcuts</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close">
+          <h2>{strings.title}</h2>
+          <button className="icon-btn" onClick={onClose} aria-label={closeLabel}>
             ✕
           </button>
         </header>
 
-        {GROUPS.map((group) => (
+        {strings.groups.map((group) => (
           <section className="pref-section" key={group.title}>
             <span className="pref-label">{group.title}</span>
             <ul className="shortcut-list">

@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from "react";
+import type { Strings } from "./i18n";
 
 /**
  * Find-in-page bar (Ctrl+F). Highlights matches in the editor using the CSS
  * Custom Highlight API, so the editor's DOM/content is never modified.
  * Enter / Shift+Enter cycle through matches; Esc closes.
  */
-export function FindBar({ onClose }: { onClose: () => void }) {
+export function FindBar({
+  strings,
+  onClose,
+}: {
+  strings: Strings["find"];
+  onClose: () => void;
+}) {
   const [query, setQuery] = useState("");
   const [total, setTotal] = useState(0);
   const [index, setIndex] = useState(0);
@@ -42,7 +49,7 @@ export function FindBar({ onClose }: { onClose: () => void }) {
       <input
         ref={inputRef}
         className="find-input"
-        placeholder="Find on page…"
+        placeholder={strings.placeholder}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
@@ -62,7 +69,7 @@ export function FindBar({ onClose }: { onClose: () => void }) {
         className="find-nav"
         onClick={() => go(-1)}
         disabled={!total}
-        title="Previous (Shift+Enter)"
+        title={strings.previous}
       >
         ↑
       </button>
@@ -70,11 +77,11 @@ export function FindBar({ onClose }: { onClose: () => void }) {
         className="find-nav"
         onClick={() => go(1)}
         disabled={!total}
-        title="Next (Enter)"
+        title={strings.next}
       >
         ↓
       </button>
-      <button className="find-nav" onClick={onClose} title="Close (Esc)">
+      <button className="find-nav" onClick={onClose} title={strings.close}>
         ✕
       </button>
     </div>

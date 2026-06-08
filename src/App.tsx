@@ -3,7 +3,11 @@ import { save, open } from "@tauri-apps/plugin-dialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { store } from "./data";
 import type { SyncStatus } from "./types";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { Editor, type EditorChange } from "./editor/Editor";
+import { getStrings } from "./i18n";
+import { MessageDialog } from "./MessageDialog";
+import { PromptDialog } from "./PromptDialog";
 import { TitleBar } from "./TitleBar";
 import { PreferencesModal } from "./PreferencesModal";
 import { CommandPalette } from "./CommandPalette";
@@ -51,11 +55,20 @@ function App() {
   const [findOpen, setFindOpen] = useState(false);
   // Data URL for a custom background image (loaded from disk via Rust).
   const [customBgUrl, setCustomBgUrl] = useState("");
+  const strings = getStrings(prefs.language);
 
   // Drive sync
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [conflictOpen, setConflictOpen] = useState(false);
+  const [createDialog, setCreateDialog] = useState<"project" | "section" | null>(
+    null,
+  );
+  const [pendingImportPath, setPendingImportPath] = useState<string | null>(null);
+  const [messageDialog, setMessageDialog] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
   const syncStatusRef = useRef<SyncStatus | null>(null);
   syncStatusRef.current = syncStatus;
   const syncTimer = useRef<number | null>(null);
@@ -82,7 +95,7 @@ function App() {
         e.preventDefault();
         const s = sectionIdRef.current;
         if (s) {
-          store.createPage(s, "Untitled").then(async (page) => {
+          store.createPage(s, strings.app.untitled).then(async (page) => {
             setPages(await store.listPages(s));
             setPageId(page.id);
             setFocusSignal((n) => n + 1);
@@ -113,7 +126,7 @@ function App() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [strings.app.untitled]);
 
   // Refs hold the freshest values so the debounced save never reads stale data.
   const saveTimer = useRef<number | null>(null);
@@ -269,6 +282,10 @@ function App() {
       }
     } catch (e) {
       console.error("Sync failed", e);
+      setMessageDialog({
+        title: strings.prefs.sync,
+        message: e instanceof Error ? e.message : String(e),
+      });
     } finally {
       setSyncing(false);
       try {
@@ -277,7 +294,7 @@ function App() {
         /* ignore */
       }
     }
-  }, [reloadAll]);
+  }, [reloadAll, strings.prefs.sync]);
 
   // Mark local data dirty and schedule a debounced push.
   const notifyChange = useCallback(() => {
@@ -331,16 +348,19 @@ function App() {
     return () => unlisten?.();
   }, [runSync]);
 
-  async function connectDrive() {
+  const connectDrive = useCallback(async () => {
     try {
       const s = await store.driveConnect();
       syncStatusRef.current = s;
       setSyncStatus(s);
       await runSync();
     } catch (e) {
-      alert(`Could not connect: ${e}`);
+      setMessageDialog({
+        title: strings.dialogs.connectErrorTitle,
+        message: strings.dialogs.connectErrorMessage(String(e)),
+      });
     }
-  }
+  }, [runSync, strings.dialogs]);
 
   async function disconnectDrive() {
     await store.driveDisconnect();
@@ -367,19 +387,15 @@ function App() {
 
   // --- Actions -------------------------------------------------------------
 
-  async function addProject() {
-    const name = prompt("Project name")?.trim();
-    if (!name) return;
+  async function addProject(name: string) {
     const project = await store.createProject(name);
     await loadProjects();
     setProjectId(project.id);
     notifyChange();
   }
 
-  async function addSection() {
+  async function addSection(name: string) {
     if (!projectId) return;
-    const name = prompt("Section name")?.trim();
-    if (!name) return;
     const section = await store.createSection(projectId, name);
     setSections(await store.listSections(projectId));
     setSectionId(section.id);
@@ -388,7 +404,7 @@ function App() {
 
   async function addPage() {
     if (!sectionId) return;
-    const page = await store.createPage(sectionId, "Untitled");
+    const page = await store.createPage(sectionId, strings.app.untitled);
     setPages(await store.listPages(sectionId));
     setPageId(page.id);
     notifyChange();
@@ -461,9 +477,9 @@ function App() {
   // Backup
   async function exportBackup() {
     const path = await save({
-      title: "Export backup",
-      defaultPath: "procrastinotes-backup.db",
-      filters: [{ name: "Procrastinotes backup", extensions: ["db"] }],
+      title: strings.dialogs.exportBackupTitle,
+      defaultPath: strings.dialogs.exportBackupDefaultName,
+      filters: [{ name: strings.dialogs.backupFilterName, extensions: ["db"] }],
     });
     if (!path) return;
     await store.exportBackup(path);
@@ -471,18 +487,16 @@ function App() {
 
   async function importBackup() {
     const selected = await open({
-      title: "Import backup",
+      title: strings.dialogs.importDialogTitle,
       multiple: false,
-      filters: [{ name: "Procrastinotes backup", extensions: ["db"] }],
+      filters: [{ name: strings.dialogs.backupFilterName, extensions: ["db"] }],
     });
     const path = typeof selected === "string" ? selected : null;
     if (!path) return;
-    if (
-      !confirm(
-        "Importing will replace ALL current data with this backup. Continue?",
-      )
-    )
-      return;
+    setPendingImportPath(path);
+  }
+
+  async function confirmImportBackup(path: string) {
     await store.importBackup(path);
     // Reload everything from the freshly imported data.
     setSectionId(null);
@@ -495,10 +509,13 @@ function App() {
   // Background image
   async function pickBackground() {
     const selected = await open({
-      title: "Choose background image",
+      title: strings.dialogs.pickBackgroundTitle,
       multiple: false,
       filters: [
-        { name: "Images", extensions: ["jpg", "jpeg", "png", "webp", "gif", "svg"] },
+        {
+          name: strings.dialogs.imageFilterName,
+          extensions: ["jpg", "jpeg", "png", "webp", "gif", "svg"],
+        },
       ],
     });
     const path = typeof selected === "string" ? selected : null;
@@ -527,6 +544,7 @@ function App() {
   return (
     <div className="root">
       <TitleBar
+        labels={strings.titleBar}
         onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
         onOpenPreferences={() => setPrefsOpen(true)}
         onShowHelp={() => setHelpOpen(true)}
@@ -534,15 +552,20 @@ function App() {
       <div className={`app ${sidebarCollapsed ? "collapsed" : ""}`}>
         <aside className="col col-projects">
         <header className="col-header">
-          <span>Projects</span>
-          <button className="icon-btn" onClick={addProject} title="New project">
+          <span>{strings.app.projects}</span>
+          <button
+            className="icon-btn"
+            onClick={() => setCreateDialog("project")}
+            title={strings.app.newProject}
+          >
             +
           </button>
         </header>
         <SidebarList
+          strings={strings.dialogs}
           items={projects.map((p) => ({ id: p.id, label: p.name }))}
           activeId={projectId}
-          emptyText="No projects yet."
+          emptyText={strings.app.noProjects}
           onSelect={setProjectId}
           onRename={onRenameProject}
           onDelete={onDeleteProject}
@@ -551,7 +574,7 @@ function App() {
         <button
           className="profile"
           onClick={() => setPrefsOpen(true)}
-          title="Preferences"
+          title={strings.titleBar.preferences}
         >
           <span className="profile-avatar">{prefs.profileAvatar}</span>
           <span className="profile-name">{prefs.profileName}</span>
@@ -560,17 +583,18 @@ function App() {
 
       <aside className="col col-sections">
         <header className="col-header">
-          <span>Sections</span>
+          <span>{strings.app.sections}</span>
           <button
             className="icon-btn"
-            onClick={addSection}
+            onClick={() => setCreateDialog("section")}
             disabled={!projectId}
-            title="New section"
+            title={strings.app.newSection}
           >
             +
           </button>
         </header>
         <SidebarList
+          strings={strings.dialogs}
           items={sections.map((s) => ({ id: s.id, label: s.name }))}
           activeId={sectionId}
           onSelect={setSectionId}
@@ -580,18 +604,19 @@ function App() {
         />
 
         <header className="col-header col-header-pages">
-          <span>Pages</span>
+          <span>{strings.app.pages}</span>
           <button
             className="icon-btn"
             onClick={addPage}
             disabled={!sectionId}
-            title="New page"
+            title={strings.app.newPage}
           >
             +
           </button>
         </header>
         <SidebarList
-          items={pages.map((p) => ({ id: p.id, label: p.title || "Untitled" }))}
+          strings={strings.dialogs}
+          items={pages.map((p) => ({ id: p.id, label: p.title || strings.app.untitled }))}
           activeId={pageId}
           onSelect={setPageId}
           onRename={onRenamePage}
@@ -617,7 +642,7 @@ function App() {
               <input
                 className="page-title"
                 value={title}
-                placeholder="Untitled"
+                placeholder={strings.app.untitled}
                 onChange={(e) => {
                   setTitle(e.target.value);
                   scheduleSave();
@@ -625,20 +650,22 @@ function App() {
                 }}
               />
               <Editor
+                key={`${pageId}:${prefs.language}`}
                 docId={pageId}
                 initialJson={pageContent}
                 onChange={onEditorChange}
+                strings={strings.editor}
                 focusSignal={focusSignal}
               />
               <footer className="status">
-                {saving ? "Saving…" : "Saved"}
+                {saving ? strings.app.saving : strings.app.saved}
                 {syncStatus?.connected &&
-                  (syncing ? " · Syncing…" : " · Synced")}
+                  (syncing ? ` · ${strings.app.syncing}` : ` · ${strings.app.synced}`)}
               </footer>
             </>
           ) : (
             <div className="placeholder">
-              <p>Select or create a page to start writing.</p>
+              <p>{strings.app.noPageSelected}</p>
             </div>
           )}
         </div>
@@ -646,10 +673,12 @@ function App() {
       </div>
       {commandOpen && (
         <CommandPalette
+          strings={strings.command}
+          untitledLabel={strings.app.untitled}
           projects={projects}
           onNavigate={navigateTo}
           onCreatePage={addPage}
-          onCreateProject={addProject}
+          onCreateProject={() => setCreateDialog("project")}
           onShowShortcuts={() => {
             setCommandOpen(false);
             setHelpOpen(true);
@@ -659,37 +688,93 @@ function App() {
           onClose={() => setCommandOpen(false)}
         />
       )}
-      {findOpen && pageId && <FindBar onClose={() => setFindOpen(false)} />}
-      {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
+      {findOpen && pageId && (
+        <FindBar strings={strings.find} onClose={() => setFindOpen(false)} />
+      )}
+      {helpOpen && (
+        <ShortcutsHelp
+          strings={strings.shortcuts}
+          closeLabel={strings.dialogs.close}
+          onClose={() => setHelpOpen(false)}
+        />
+      )}
       {conflictOpen && (
         <div className="modal-overlay">
           <div className="confirm" onClick={(e) => e.stopPropagation()}>
-            <h3 className="confirm-title">Sync conflict</h3>
-            <p className="confirm-message">
-              This computer and Drive both changed since the last sync. Which
-              version do you want to keep? A backup of the other one is saved.
-            </p>
+            <h3 className="confirm-title">{strings.app.syncConflictTitle}</h3>
+            <p className="confirm-message">{strings.app.syncConflictMessage}</p>
             <div className="confirm-actions">
               <button
                 className="btn-ghost"
                 onClick={() => resolveConflict("remote")}
               >
-                Keep Drive
+                {strings.app.keepDrive}
               </button>
               <button
                 className="btn-accent"
                 onClick={() => resolveConflict("local")}
               >
-                Keep this computer
+                {strings.app.keepThisComputer}
               </button>
             </div>
           </div>
         </div>
       )}
+      {createDialog === "project" && (
+        <PromptDialog
+          title={strings.dialogs.createProjectTitle}
+          label={strings.dialogs.createProjectLabel}
+          placeholder={strings.dialogs.createProjectPlaceholder}
+          confirmLabel={strings.dialogs.create}
+          cancelLabel={strings.dialogs.cancel}
+          onConfirm={(name) => {
+            void addProject(name);
+            setCreateDialog(null);
+          }}
+          onCancel={() => setCreateDialog(null)}
+        />
+      )}
+      {createDialog === "section" && (
+        <PromptDialog
+          title={strings.dialogs.createSectionTitle}
+          label={strings.dialogs.createSectionLabel}
+          placeholder={strings.dialogs.createSectionPlaceholder}
+          confirmLabel={strings.dialogs.create}
+          cancelLabel={strings.dialogs.cancel}
+          onConfirm={(name) => {
+            void addSection(name);
+            setCreateDialog(null);
+          }}
+          onCancel={() => setCreateDialog(null)}
+        />
+      )}
+      {pendingImportPath && (
+        <ConfirmDialog
+          title={strings.dialogs.importBackupTitle}
+          message={strings.dialogs.importBackupMessage}
+          confirmLabel={strings.dialogs.import}
+          cancelLabel={strings.dialogs.cancel}
+          onConfirm={() => {
+            void confirmImportBackup(pendingImportPath);
+            setPendingImportPath(null);
+          }}
+          onCancel={() => setPendingImportPath(null)}
+        />
+      )}
+      {messageDialog && (
+        <MessageDialog
+          title={messageDialog.title}
+          message={messageDialog.message}
+          closeLabel={strings.dialogs.ok}
+          onClose={() => setMessageDialog(null)}
+        />
+      )}
       {prefsOpen && (
         <PreferencesModal
           prefs={prefs}
           update={updatePrefs}
+          strings={strings.prefs}
+          closeLabel={strings.dialogs.close}
           onExportBackup={exportBackup}
           onImportBackup={importBackup}
           onPickBackground={pickBackground}

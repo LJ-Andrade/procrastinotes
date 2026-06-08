@@ -1,10 +1,17 @@
 import { useEditorState, type Editor } from "@tiptap/react";
+import type { Strings } from "../i18n";
 
 /**
  * A small, always-visible formatting toolbar for the editor. Gives clickable
  * icon controls for the same actions available via keyboard / markdown input.
  */
-export function EditorToolbar({ editor }: { editor: Editor }) {
+export function EditorToolbar({
+  editor,
+  strings,
+}: {
+  editor: Editor;
+  strings: Strings["editor"];
+}) {
   // Subscribe to just the active states so the toolbar re-renders when they
   // change (Tiptap v3 does not re-render on every transaction by default).
   const s = useEditorState({
@@ -31,14 +38,14 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
       <button
         className={cls(s.h1)}
         onClick={() => chain().toggleHeading({ level: 1 }).run()}
-        title="Heading 1"
+        title={strings.heading1}
       >
         H1
       </button>
       <button
         className={cls(s.h2)}
         onClick={() => chain().toggleHeading({ level: 2 }).run()}
-        title="Heading 2"
+        title={strings.heading2}
       >
         H2
       </button>
@@ -48,21 +55,21 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
       <button
         className={cls(s.bold)}
         onClick={() => chain().toggleBold().run()}
-        title="Bold (Ctrl+B)"
+        title={strings.bold}
       >
         <span className="fmt-b">B</span>
       </button>
       <button
         className={cls(s.italic)}
         onClick={() => chain().toggleItalic().run()}
-        title="Italic (Ctrl+I)"
+        title={strings.italic}
       >
         <span className="fmt-i">I</span>
       </button>
       <button
         className={cls(s.strike)}
         onClick={() => chain().toggleStrike().run()}
-        title="Strikethrough"
+        title={strings.strikethrough}
       >
         <span className="fmt-s">S</span>
       </button>
@@ -72,21 +79,21 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
       <button
         className={cls(s.bullet)}
         onClick={() => chain().toggleBulletList().run()}
-        title="Bullet list"
+        title={strings.bulletList}
       >
         <IconBullet />
       </button>
       <button
         className={cls(s.ordered)}
         onClick={() => chain().toggleOrderedList().run()}
-        title="Numbered list"
+        title={strings.numberedList}
       >
         <span className="fmt-ol">1.</span>
       </button>
       <button
         className={cls(s.task)}
         onClick={() => chain().toggleTaskList().run()}
-        title="Checklist"
+        title={strings.checklist}
       >
         <IconTask />
       </button>
@@ -96,14 +103,14 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
       <button
         className={cls(s.quote)}
         onClick={() => chain().toggleBlockquote().run()}
-        title="Quote"
+        title={strings.quote}
       >
         <IconQuote />
       </button>
       <button
         className={cls(s.code)}
         onClick={() => chain().toggleCodeBlock().run()}
-        title="Code block"
+        title={strings.codeBlock}
       >
         <span className="fmt-code">{"</>"}</span>
       </button>

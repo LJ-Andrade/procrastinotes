@@ -12,6 +12,14 @@ const iconModules = import.meta.glob("./assets/icon.{png,svg,webp,jpg,jpeg}", {
 const ICON_URL = Object.values(iconModules)[0];
 
 interface TitleBarProps {
+  labels: {
+    toggleSidebar: string;
+    keyboardShortcuts: string;
+    preferences: string;
+    minimize: string;
+    maximize: string;
+    close: string;
+  };
   onToggleSidebar: () => void;
   onOpenPreferences: () => void;
   onShowHelp: () => void;
@@ -23,6 +31,7 @@ interface TitleBarProps {
  * is the drag region; the buttons drive window controls and app actions.
  */
 export function TitleBar({
+  labels,
   onToggleSidebar,
   onOpenPreferences,
   onShowHelp,
@@ -33,8 +42,8 @@ export function TitleBar({
         <button
           className="tb-icon"
           onClick={onToggleSidebar}
-          aria-label="Toggle sidebar"
-          title="Toggle sidebar (Ctrl+\)"
+          aria-label={labels.toggleSidebar}
+          title={`${labels.toggleSidebar} (Ctrl+\\)`}
         >
           <svg width="15" height="15" viewBox="0 0 16 16">
             <rect
@@ -61,8 +70,8 @@ export function TitleBar({
         <button
           className="tb-icon"
           onClick={onShowHelp}
-          aria-label="Keyboard shortcuts"
-          title="Keyboard shortcuts (?)"
+          aria-label={labels.keyboardShortcuts}
+          title={`${labels.keyboardShortcuts} (?)`}
         >
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" />
@@ -77,8 +86,8 @@ export function TitleBar({
         <button
           className="tb-icon"
           onClick={onOpenPreferences}
-          aria-label="Preferences"
-          title="Preferences (Ctrl+,)"
+          aria-label={labels.preferences}
+          title={`${labels.preferences} (Ctrl+,)`}
         >
           <svg width="15" height="15" viewBox="0 0 16 16" stroke="currentColor">
             <line x1="2" y1="4" x2="14" y2="4" />
@@ -92,7 +101,7 @@ export function TitleBar({
         <button
           className="tb-btn"
           onClick={() => appWindow.minimize()}
-          aria-label="Minimize"
+          aria-label={labels.minimize}
         >
           <svg width="10" height="10" viewBox="0 0 10 10">
             <rect x="0" y="4.5" width="10" height="1" fill="currentColor" />
@@ -101,7 +110,7 @@ export function TitleBar({
         <button
           className="tb-btn"
           onClick={() => appWindow.toggleMaximize()}
-          aria-label="Maximize"
+          aria-label={labels.maximize}
         >
           <svg width="10" height="10" viewBox="0 0 10 10">
             <rect
@@ -117,7 +126,7 @@ export function TitleBar({
         <button
           className="tb-btn tb-close"
           onClick={() => appWindow.close()}
-          aria-label="Close"
+          aria-label={labels.close}
         >
           <svg width="10" height="10" viewBox="0 0 10 10">
             <path d="M0 0 L10 10 M10 0 L0 10" stroke="currentColor" />

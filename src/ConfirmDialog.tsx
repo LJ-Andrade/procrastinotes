@@ -4,6 +4,7 @@ interface ConfirmDialogProps {
   title: string;
   message?: string;
   confirmLabel?: string;
+  cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -16,6 +17,7 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = "Delete",
+  cancelLabel = "Cancel",
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -40,7 +42,7 @@ export function ConfirmDialog({
         {message && <p className="confirm-message">{message}</p>}
         <div className="confirm-actions">
           <button className="btn-ghost" onClick={onCancel}>
-            Cancel
+            {cancelLabel}
           </button>
           <button className="btn-danger" onClick={onConfirm} autoFocus>
             {confirmLabel}

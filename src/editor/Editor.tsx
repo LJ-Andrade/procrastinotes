@@ -1,6 +1,7 @@
 import { useEditor, EditorContent, type JSONContent } from "@tiptap/react";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { EditorToolbar } from "./EditorToolbar";
+import type { Strings } from "../i18n";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
@@ -20,6 +21,7 @@ interface EditorProps {
   /** Stored content for this document (Tiptap JSON string, or legacy text). */
   initialJson: string;
   onChange: (change: EditorChange) => void;
+  strings: Strings["editor"];
   /** Bumping this number asks the editor to take focus (e.g. quick capture). */
   focusSignal?: number;
 }
@@ -36,6 +38,7 @@ export function Editor({
   docId,
   initialJson,
   onChange,
+  strings,
   focusSignal,
 }: EditorProps) {
   // Keep the latest onChange without recreating the editor instance.
@@ -47,7 +50,7 @@ export function Editor({
       StarterKit,
       TaskList,
       TaskItem.configure({ nested: true }),
-      Placeholder.configure({ placeholder: "Start writing…" }),
+      Placeholder.configure({ placeholder: strings.placeholder }),
     ],
     content: parseContent(initialJson),
     onUpdate: ({ editor }) => {
@@ -75,7 +78,7 @@ export function Editor({
 
   return (
     <div className="editor-wrapper">
-      {editor && <EditorToolbar editor={editor} />}
+      {editor && <EditorToolbar editor={editor} strings={strings} />}
       {editor && (
         <DragHandle editor={editor} nested>
           <svg

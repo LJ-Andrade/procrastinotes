@@ -144,17 +144,20 @@ body {
 
 /* Thin, theme-agnostic scrollbars. */
 .col::-webkit-scrollbar,
-.editor-content::-webkit-scrollbar {
+.editor-content::-webkit-scrollbar,
+.prefs-modal::-webkit-scrollbar {
   width: 12px;
 }
 
 .col::-webkit-scrollbar-track,
-.editor-content::-webkit-scrollbar-track {
+.editor-content::-webkit-scrollbar-track,
+.prefs-modal::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .col::-webkit-scrollbar-thumb,
-.editor-content::-webkit-scrollbar-thumb {
+.editor-content::-webkit-scrollbar-thumb,
+.prefs-modal::-webkit-scrollbar-thumb {
   background: rgba(140, 130, 120, 0.35);
   border: 4px solid transparent;
   border-radius: 10px;
@@ -162,7 +165,8 @@ body {
 }
 
 .col::-webkit-scrollbar-thumb:hover,
-.editor-content::-webkit-scrollbar-thumb:hover {
+.editor-content::-webkit-scrollbar-thumb:hover,
+.prefs-modal::-webkit-scrollbar-thumb:hover {
   background: rgba(140, 130, 120, 0.6);
   background-clip: padding-box;
 }
@@ -753,21 +757,46 @@ body {
 
 /* Preferences uses a wider, two-column layout. */
 .prefs-modal {
-  width: 620px;
+  width: 700px;
   max-height: calc(100vh - 60px);
   overflow-y: auto;
+  padding-right: 12px;
+  scrollbar-gutter: stable;
 }
 
-.pref-grid {
+.prefs-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 26px;
-  row-gap: 18px;
   align-items: start;
 }
 
-.pref-grid .pref-section {
+.prefs-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pref-group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--bg-elevated) 82%, var(--bg) 18%);
+}
+
+.pref-group-title {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pref-group .pref-section {
   margin-top: 0;
+}
+
+.pref-group .pref-section + .pref-section {
+  margin-top: 18px;
 }
 
 .modal-footer {
@@ -816,6 +845,10 @@ body {
   padding: 22px;
 }
 
+.prompt-dialog {
+  width: 380px;
+}
+
 .confirm-title {
   margin: 0;
   font-size: 15px;
@@ -835,6 +868,36 @@ body {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+}
+
+.prompt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.prompt-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.prompt-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.prompt-input:focus {
+  border-color: var(--accent);
 }
 
 .btn-ghost {
@@ -882,6 +945,12 @@ body {
 
 .btn-accent:hover {
   filter: brightness(1.06);
+}
+
+.btn-accent:disabled {
+  opacity: 0.5;
+  cursor: default;
+  filter: none;
 }
 
 .sync-info {

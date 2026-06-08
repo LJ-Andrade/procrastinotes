@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { store } from "./data";
+import type { Strings } from "./i18n";
 import type { Project, SearchHit } from "./types";
 
 interface CommandPaletteProps {
+  strings: Strings["command"];
+  untitledLabel: string;
   projects: Project[];
   onNavigate: (projectId: string, sectionId: string, pageId: string) => void;
   onCreatePage: () => void;
@@ -20,6 +23,8 @@ type Item =
 const SEARCH_DEBOUNCE = 140;
 
 export function CommandPalette({
+  strings,
+  untitledLabel,
   projects,
   onNavigate,
   onCreatePage,
@@ -63,28 +68,28 @@ export function CommandPalette({
 
   const items: Item[] = [
     ...results.map((hit) => ({ kind: "page" as const, hit })),
-    { kind: "action", label: "Create new page", icon: "+", run: onCreatePage },
+    { kind: "action", label: strings.createPage, icon: "+", run: onCreatePage },
     {
       kind: "action",
-      label: "Create new project",
+      label: strings.createProject,
       icon: "▣",
       run: onCreateProject,
     },
     {
       kind: "action",
-      label: "Export backup",
+      label: strings.exportBackup,
       icon: "↧",
       run: onExportBackup,
     },
     {
       kind: "action",
-      label: "Import backup",
+      label: strings.importBackup,
       icon: "↥",
       run: onImportBackup,
     },
     {
       kind: "action",
-      label: "Keyboard shortcuts",
+      label: strings.keyboardShortcuts,
       icon: "?",
       run: onShowShortcuts,
     },
@@ -125,7 +130,7 @@ export function CommandPalette({
           ref={inputRef}
           className="command-input"
           value={query}
-          placeholder="Search pages or run a command…"
+          placeholder={strings.placeholder}
           onChange={(e) => {
             setQuery(e.target.value);
             setSelected(0);
@@ -143,7 +148,7 @@ export function CommandPalette({
               {item.kind === "page" ? (
                 <>
                   <span className="command-title">
-                    {item.hit.title || "Untitled"}
+                    {item.hit.title || untitledLabel}
                   </span>
                   <span className="command-snippet">
                     <Snippet text={item.hit.snippet} />
@@ -164,13 +169,13 @@ export function CommandPalette({
         <div className="command-footer">
           <span>
             <kbd>↑</kbd>
-            <kbd>↓</kbd> navigate
+            <kbd>↓</kbd> {strings.navigate}
           </span>
           <span>
-            <kbd>↵</kbd> open
+            <kbd>↵</kbd> {strings.open}
           </span>
           <span>
-            <kbd>esc</kbd> close
+            <kbd>esc</kbd> {strings.close}
           </span>
         </div>
       </div>

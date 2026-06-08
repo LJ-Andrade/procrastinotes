@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 
 export type Theme = "light" | "dark" | "auto";
+export type Language = "en" | "es";
 
 export interface Preferences {
   theme: Theme;
+  language: Language;
   /** Accent palette id (see ACCENTS). */
   accent: string;
   /** Local display name. Purely cosmetic — no accounts, no login. */
@@ -33,10 +35,27 @@ export const AVATARS = ["🦊", "🐱", "🐼", "🦉", "🐙", "🌿", "⭐", "
 
 const STORAGE_KEY = "procrastinotes.prefs";
 
+function detectLanguage(): Language {
+  const preferred = navigator.languages?.length ? navigator.languages : [navigator.language];
+  for (const locale of preferred) {
+    const normalized = locale.toLowerCase();
+    if (normalized.startsWith("es")) return "es";
+    if (normalized.startsWith("en")) return "en";
+  }
+  return "en";
+}
+
+function defaultProfileName(language: Language): string {
+  return language === "es" ? "Vos" : "You";
+}
+
+const DEFAULT_LANGUAGE = detectLanguage();
+
 const DEFAULTS: Preferences = {
   theme: "auto",
+  language: DEFAULT_LANGUAGE,
   accent: "clay",
-  profileName: "You",
+  profileName: defaultProfileName(DEFAULT_LANGUAGE),
   profileAvatar: "🦊",
   ambient: false,
   background: "",
