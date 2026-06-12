@@ -576,6 +576,70 @@ body {
   margin-top: 0.7em;
 }
 
+/* Inline images (pasted, dropped, or picked). The node view wraps each image;
+   bytes load lazily from the asset store. */
+.editor-image {
+  display: flex;
+  margin: 0.4em 0;
+}
+
+/* The frame carries the chosen display width and anchors the resize handles. */
+.editor-image-frame {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.editor-image-frame img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
+.editor-image[data-selected="true"] .editor-image-frame img {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Drag handles, shown only while the image is selected. */
+.editor-image-handle {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 38px;
+  max-height: 70%;
+  transform: translateY(-50%);
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 6px;
+  cursor: ew-resize;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  touch-action: none;
+}
+
+.editor-image-handle.left {
+  left: -7px;
+}
+
+.editor-image-handle.right {
+  right: -7px;
+}
+
+/* Shown briefly while an asset's bytes are being resolved. */
+.editor-image-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  min-height: 80px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--text-soft);
+  font-size: 18px;
+}
+
 .ProseMirror h1 {
   font-size: 1.5em;
   font-weight: 700;

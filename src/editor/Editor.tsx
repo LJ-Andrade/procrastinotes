@@ -7,6 +7,8 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEffect, useRef } from "react";
+import { ImageAsset } from "./ImageNode";
+import { imageFilesFrom, insertImageFiles } from "./imageAsset";
 
 export interface EditorChange {
   /** Tiptap document as a JSON string. */
@@ -45,13 +47,30 @@ export function Editor({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  // Editor instance, accessed from the paste/drop handlers (bound once).
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
       TaskList,
       TaskItem.configure({ nested: true }),
+      ImageAsset,
       Placeholder.configure({ placeholder: strings.placeholder }),
     ],
+    editorProps: {
+      // Intercept images from the clipboard / a file drop: resize + store them
+      // as assets, then insert a reference. Non-image payloads fall through to
+      // Tiptap's default handling.
+      handlePaste: (_view, event) =>
+        handleImageTransfer(event.clipboardData?.files),
+      handleDrop: (view, event) => {
+        const e = event as DragEvent;
+        // Drop the image where the cursor lands, not at the previous caret.
+        const dropPos = view.posAtCoords({ left: e.clientX, top: e.clientY })?.pos;
+        return handleImageTransfer(e.dataTransfer?.files, e, dropPos);
+      },
+    },
     content: parseContent(initialJson),
     onUpdate: ({ editor }) => {
       onChangeRef.current({
@@ -60,15 +79,34 @@ export function Editor({
       });
     },
   });
+  editorRef.current = editor;
+
+  function handleImageTransfer(
+    files: FileList | null | undefined,
+    event?: Event,
+    dropPos?: number,
+  ): boolean {
+    const images = imageFilesFrom(files);
+    if (images.length === 0 || !editorRef.current) return false;
+    event?.preventDefault();
+    if (dropPos != null) editorRef.current.commands.setTextSelection(dropPos);
+    void insertImageFiles(editorRef.current, images);
+    return true;
+  }
 
   // Load the content of the selected document without emitting a save.
+  // `initialJson` is in the deps because the parent mounts this editor before
+  // the page's content has finished loading (the load is async), so the first
+  // render carries the *previous* page's content. Reloading when `initialJson`
+  // arrives corrects that — otherwise the editor would keep showing the page we
+  // navigated from. It only changes on page load, never while typing.
   useEffect(() => {
     if (!editor) return;
     editor.commands.setContent(parseContent(initialJson) ?? "", {
       emitUpdate: false,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [docId, editor]);
+  }, [docId, initialJson, editor]);
 
   // Take focus on request (skip the initial render, when focusSignal is 0).
   useEffect(() => {

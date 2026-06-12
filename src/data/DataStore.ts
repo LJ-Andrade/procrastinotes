@@ -57,6 +57,25 @@ export interface DataStore {
   /** Read an image file and return it as a `data:` URL. */
   readImageDataUrl(path: string): Promise<string>;
 
+  // Assets (images embedded in page content)
+  /**
+   * Store an image (already resized) as a binary asset and return its id.
+   * `dataBase64` is the raw base64 payload (no `data:` prefix).
+   */
+  putAsset(
+    mime: string,
+    dataBase64: string,
+    width: number | null,
+    height: number | null,
+  ): Promise<string>;
+  /** Resolve a stored asset id to a `data:` URL for display. */
+  getAsset(id: string): Promise<string>;
+  /**
+   * Delete image blobs no page references any more. Returns how many were
+   * removed. Safe to call on startup; never call mid-edit.
+   */
+  cleanupAssets(): Promise<number>;
+
   // Drive sync
   driveStatus(): Promise<SyncStatus>;
   driveConnect(): Promise<SyncStatus>;

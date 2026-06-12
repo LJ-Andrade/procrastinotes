@@ -1,6 +1,7 @@
 use crate::db::Db;
 use crate::models::{Page, Project, SearchHit, Section};
-use rusqlite::Row;
+use rusqlite::{OptionalExtension, Row};
+use std::collections::HashSet;
 use tauri::State;
 use uuid::Uuid;
 
@@ -445,6 +446,119 @@ pub fn read_image_data_url(path: String) -> Result<String, String> {
 }
 
 // ---------------------------------------------------------------------------
+// Assets (images embedded in page content)
+// ---------------------------------------------------------------------------
+
+/// Stores an image as a BLOB and returns its generated id. The frontend sends
+/// the bytes as a base64 string, already resized. Keeping bytes in SQLite means
+/// backups and future sync stay a single self-contained file; page content only
+/// stores the returned id (so `content_json` and the search index stay light).
+#[tauri::command]
+pub fn put_asset(
+    db: State<Db>,
+    mime: String,
+    data: String,
+    width: Option<i64>,
+    height: Option<i64>,
+) -> Result<String, String> {
+    use base64::Engine;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(data.as_bytes())
+        .map_err(|e| e.to_string())?;
+    let id = new_id();
+    let conn = conn!(db);
+    conn.execute(
+        "INSERT INTO assets (id, mime, bytes, width, height, created_at) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        rusqlite::params![id, mime, bytes, width, height, now()],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(id)
+}
+
+/// Returns a stored image as a `data:` URL so the webview can render it without
+/// any asset-protocol setup (mirrors `read_image_data_url`).
+#[tauri::command]
+pub fn get_asset(db: State<Db>, id: String) -> Result<String, String> {
+    use base64::Engine;
+    let conn = conn!(db);
+    let (mime, bytes): (String, Vec<u8>) = conn
+        .query_row(
+            "SELECT mime, bytes FROM assets WHERE id = ?1",
+            [&id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .map_err(|e| e.to_string())?;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    Ok(format!("data:{};base64,{}", mime, b64))
+}
+
+/// Deletes asset blobs that no page references any more (e.g. an image whose
+/// node was removed from a note). Walks every live page's `content_json`,
+/// collects the `asset:<id>` references, and removes everything else. Returns
+/// the number of blobs deleted. Meant to run occasionally (e.g. on startup),
+/// never mid-edit, so unsaved-but-just-pasted images are never collected.
+#[tauri::command]
+pub fn cleanup_assets(db: State<Db>) -> Result<usize, String> {
+    let conn = conn!(db);
+
+    let mut referenced: HashSet<String> = HashSet::new();
+    {
+        let mut stmt = conn
+            .prepare("SELECT content_json FROM pages WHERE deleted_at IS NULL")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |row| row.get::<_, String>(0))
+            .map_err(|e| e.to_string())?;
+        for json in rows {
+            collect_asset_refs(&json.map_err(|e| e.to_string())?, &mut referenced);
+        }
+    }
+
+    let orphans: Vec<String> = {
+        let mut stmt = conn
+            .prepare("SELECT id FROM assets")
+            .map_err(|e| e.to_string())?;
+        let ids = stmt
+            .query_map([], |row| row.get::<_, String>(0))
+            .map_err(|e| e.to_string())?;
+        let mut out = Vec::new();
+        for id in ids {
+            let id = id.map_err(|e| e.to_string())?;
+            if !referenced.contains(&id) {
+                out.push(id);
+            }
+        }
+        out
+    };
+
+    for id in &orphans {
+        conn.execute("DELETE FROM assets WHERE id = ?1", [id])
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(orphans.len())
+}
+
+/// Scans a Tiptap JSON string for `asset:<uuid>` references and adds the ids to
+/// `out`. UUIDs are hex digits and hyphens, so we read those chars after each
+/// `asset:` marker — robust enough without fully parsing the document tree.
+fn collect_asset_refs(json: &str, out: &mut HashSet<String>) {
+    let bytes = json.as_bytes();
+    let mut search_from = 0;
+    while let Some(rel) = json[search_from..].find("asset:") {
+        let start = search_from + rel + "asset:".len();
+        let mut end = start;
+        while end < bytes.len() && (bytes[end].is_ascii_hexdigit() || bytes[end] == b'-') {
+            end += 1;
+        }
+        if end > start {
+            out.insert(json[start..end].to_string());
+        }
+        search_from = (start).max(search_from + rel + 1);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Backup
 // ---------------------------------------------------------------------------
 
@@ -481,6 +595,7 @@ pub fn import_snapshot(conn: &mut rusqlite::Connection, path: &str) -> Result<()
         let tx = conn.transaction()?;
         tx.execute_batch(
             "DELETE FROM pages_fts;
+             DELETE FROM assets;
              DELETE FROM pages;
              DELETE FROM sections;
              DELETE FROM projects;
@@ -499,6 +614,24 @@ pub fn import_snapshot(conn: &mut rusqlite::Connection, path: &str) -> Result<()
              INSERT INTO pages_fts (page_id, title, content_text)
                  SELECT id, title, content_text FROM pages WHERE deleted_at IS NULL;",
         )?;
+
+        // Backups created before the assets table (schema v1) have no
+        // `src.assets`; import image blobs only when the source provides them.
+        let has_assets = tx
+            .query_row(
+                "SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = 'assets'",
+                [],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some();
+        if has_assets {
+            tx.execute_batch(
+                "INSERT INTO assets (id, mime, bytes, width, height, created_at)
+                     SELECT id, mime, bytes, width, height, created_at FROM src.assets;",
+            )?;
+        }
+
         tx.commit()
     })();
 

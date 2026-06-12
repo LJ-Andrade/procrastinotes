@@ -157,6 +157,12 @@ function App() {
     loadProjects();
   }, [loadProjects]);
 
+  // Sweep image blobs no page references any more (e.g. a deleted image), once
+  // on startup when nothing is mid-edit. Fire-and-forget; failures are silent.
+  useEffect(() => {
+    void store.cleanupAssets().catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!projectId) {
       setSections([]);

@@ -25,6 +25,11 @@ fn run_migrations(conn: &Connection) -> rusqlite::Result<()> {
         conn.execute_batch("PRAGMA user_version = 1;")?;
     }
 
+    if version < 2 {
+        conn.execute_batch(MIGRATION_002)?;
+        conn.execute_batch("PRAGMA user_version = 2;")?;
+    }
+
     Ok(())
 }
 
@@ -77,5 +82,20 @@ CREATE VIRTUAL TABLE pages_fts USING fts5(
     page_id UNINDEXED,
     title,
     content_text
+);
+"#;
+
+/// Adds the `assets` table: binary image blobs embedded in page content.
+/// Bytes live in SQLite (not on disk) so backups and future sync stay a single
+/// self-contained file. Page content references an asset by its `id`; the bytes
+/// are already resized on the frontend before they reach here.
+const MIGRATION_002: &str = r#"
+CREATE TABLE assets (
+    id          TEXT PRIMARY KEY,
+    mime        TEXT NOT NULL,
+    bytes       BLOB NOT NULL,
+    width       INTEGER,
+    height      INTEGER,
+    created_at  TEXT NOT NULL
 );
 "#;

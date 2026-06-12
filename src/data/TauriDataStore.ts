@@ -51,6 +51,12 @@ export const tauriDataStore: DataStore = {
   // Images
   readImageDataUrl: (path) => invoke<string>("read_image_data_url", { path }),
 
+  // Assets (images embedded in page content)
+  putAsset: (mime, dataBase64, width, height) =>
+    invoke<string>("put_asset", { mime, data: dataBase64, width, height }),
+  getAsset: (id) => invoke<string>("get_asset", { id }),
+  cleanupAssets: () => invoke<number>("cleanup_assets"),
+
   // Drive sync
   driveStatus: () => invoke<SyncStatus>("drive_status"),
   driveConnect: () => invoke<SyncStatus>("drive_connect"),

@@ -33,6 +33,7 @@ export const es: Strings = {
     checklist: "Checklist",
     quote: "Cita",
     codeBlock: "Bloque de código",
+    image: "Insertar imagen",
   },
   dialogs: {
     cancel: "Cancelar",

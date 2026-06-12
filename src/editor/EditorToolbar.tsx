@@ -1,5 +1,7 @@
 import { useEditorState, type Editor } from "@tiptap/react";
+import { useRef } from "react";
 import type { Strings } from "../i18n";
+import { imageFilesFrom, insertImageFiles } from "./imageAsset";
 
 /**
  * A small, always-visible formatting toolbar for the editor. Gives clickable
@@ -32,6 +34,15 @@ export function EditorToolbar({
 
   const chain = () => editor.chain().focus();
   const cls = (active: boolean) => `fmt-btn ${active ? "active" : ""}`;
+
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const images = imageFilesFrom(e.target.files);
+    if (images.length > 0) void insertImageFiles(editor, images);
+    // Reset so picking the same file again re-triggers change.
+    e.target.value = "";
+  };
 
   return (
     <div className="editor-toolbar">
@@ -114,7 +125,42 @@ export function EditorToolbar({
       >
         <span className="fmt-code">{"</>"}</span>
       </button>
+
+      <span className="fmt-sep" />
+
+      <button
+        className={cls(false)}
+        onClick={() => fileInput.current?.click()}
+        title={strings.image}
+      >
+        <IconImage />
+      </button>
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={onPickImage}
+      />
     </div>
+  );
+}
+
+function IconImage() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+    >
+      <rect x="1.5" y="2.5" width="13" height="11" rx="1.6" />
+      <circle cx="5.5" cy="6" r="1.3" fill="currentColor" stroke="none" />
+      <path d="M2.5 12 L6 8.5 L8.5 11 L11 8 L13.5 11" />
+    </svg>
   );
 }
 

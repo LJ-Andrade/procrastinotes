@@ -93,6 +93,7 @@ Schema (see `MIGRATION_001` in `src/db.rs`): `projects` → `sections` → `page
 - **Soft deletes**: `deleted_at` timestamp; queries filter `WHERE deleted_at IS NULL`. Nothing is hard-deleted (except FTS rows).
 - **`parent_id`** (nullable) on `sections` and `pages` is **reserved for future nesting** and stays `NULL` in V1. The UI shows a flat 3-level hierarchy.
 - **Page content** is stored as **Tiptap JSON** in `content_json` (never HTML). `content_text` is a derived plain-text copy that feeds search.
+- **Images** are stored as binary blobs in the `assets` table (`MIGRATION_002`), not on disk. Page content references an asset by id via an `asset:<id>` node `src`; the bytes are resized to WebP on the frontend before `put_asset` stores them, so `content_json` and the search index stay light and backups/sync stay a single file. The `ImageAsset` node view resolves a reference to a `data:` URL via `get_asset` on render (lazy load), and adds drag handles that write a display `width` attribute on the node (display-only; the bytes are never re-encoded). Orphaned blobs (an image whose node was deleted) are swept by the `cleanup_assets` command, called once on startup. See `src/editor/imageAsset.ts` (resize + insert), `src/editor/ImageNode.tsx` (node view + resize), and `put_asset` / `get_asset` / `cleanup_assets` in `commands.rs`.
 - **Search**: a standalone FTS5 virtual table `pages_fts(page_id, title, content_text)` is kept in sync **manually** from the command layer (on create/update/rename/delete of pages). It is standalone (not external-content) because PKs are TEXT UUIDs. `search()` does prefix matching per token and returns `snippet()`s with matches wrapped in `[ ]`.
 - **Timestamps** are RFC 3339 strings (`chrono::Utc::now().to_rfc3339()`).
 
@@ -200,10 +201,13 @@ task-list checkboxes, code, quote, block drag handle, formatting toolbar);
 autosave; global FTS command palette; quick capture; find-in-page; shortcuts
 help; custom frameless title bar; collapsible sidebar; preferences (theme,
 accent, local profile, ambient particles, editor background with presets +
-custom upload + opacity); styled delete confirmation; backup export/import.
+custom upload + opacity); styled delete confirmation; backup export/import;
+images in page content (paste / drop-at-cursor / pick, resized to WebP, stored
+as SQLite blobs in the `assets` table, drag-handle resize, and startup garbage
+collection of orphaned blobs via `cleanup_assets`).
 
 **Not done yet / next ideas:** per-project icon & color UI (the `icon`/`color`/
-`cover` columns already exist on `projects`); images inside page content;
+`cover` columns already exist on `projects`);
 tags / favorites / pinned / recent / daily notes / templates; markdown
 import-export; the web `DataStore` (IndexedDB) implementation; **Android port**;
 **Google Drive sync** (local-first, no server — see `docs/TECHNICAL_PLAN.md`);

@@ -42,6 +42,7 @@ export interface Strings {
     checklist: string;
     quote: string;
     codeBlock: string;
+    image: string;
   };
   dialogs: {
     cancel: string;
