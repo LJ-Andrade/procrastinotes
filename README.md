@@ -47,6 +47,13 @@ it.
 > isn't code-signed yet. Click **More info → Run anyway**. A Microsoft Store
 > release (no warnings) is planned.
 
+## Support
+
+Procrastinotes is free. If it's useful to you and you'd like to support its
+development, you can buy me a coffee:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/moubix)
+
 ## Build from source
 
 Prerequisites: [Node.js](https://nodejs.org), the
