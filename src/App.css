@@ -1216,6 +1216,13 @@ body {
   border-color: var(--accent);
 }
 
+.pref-help {
+  margin: -2px 0 9px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
 .toggle-row {
   display: flex;
   align-items: center;
@@ -1303,6 +1310,116 @@ body {
   flex: 1;
   accent-color: var(--accent);
   cursor: pointer;
+}
+
+/* Support toast (bottom-left, subtle "buy me a coffee") ------------------- */
+
+.support-toast {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 60;
+  width: 264px;
+  padding: 13px 16px 11px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+  animation: support-in 0.28s ease;
+}
+
+.support-toast.leaving {
+  animation: support-out 0.24s ease forwards;
+}
+
+@keyframes support-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes support-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.support-toast-close {
+  position: absolute;
+  top: 7px;
+  right: 9px;
+  border: none;
+  background: none;
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.support-toast-close:hover {
+  color: var(--text);
+}
+
+.support-toast-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.support-toast-body {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
+.support-toast-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.support-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.support-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.support-toast-dismiss {
+  display: block;
+  margin: 9px auto 0;
+  border: none;
+  background: none;
+  color: var(--text-soft);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.support-toast-dismiss:hover {
+  color: var(--text);
+  text-decoration: underline;
 }
 
 /* Command palette --------------------------------------------------------- */

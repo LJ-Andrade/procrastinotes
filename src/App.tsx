@@ -15,6 +15,7 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { FindBar } from "./FindBar";
 import { Ambient } from "./Ambient";
 import { SidebarList } from "./SidebarList";
+import { SupportToast } from "./SupportToast";
 import { BACKGROUNDS } from "./backgrounds";
 import { usePreferences } from "./preferences";
 import type { Page, Project, Section } from "./types";
@@ -837,6 +838,7 @@ function App() {
           onClose={() => setPrefsOpen(false)}
         />
       )}
+      <SupportToast strings={strings.support} />
     </div>
   );
 }

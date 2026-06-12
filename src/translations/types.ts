@@ -105,8 +105,15 @@ export interface Strings {
     syncing: string;
     connected: string;
     lastSync: string;
+    support: string;
+    supportText: string;
     themes: Record<Theme, string>;
     languages: Record<Language, string>;
+  };
+  support: {
+    toastTitle: string;
+    toastBody: string;
+    dismiss: string;
   };
   command: {
     placeholder: string;

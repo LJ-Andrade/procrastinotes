@@ -8,6 +8,7 @@ import {
 import { BACKGROUNDS } from "./backgrounds";
 import type { Strings } from "./i18n";
 import type { SyncStatus } from "./types";
+import { KOFI_URL, PAYPAL_URL, openExternal } from "./links";
 
 interface PreferencesModalProps {
   prefs: Preferences;
@@ -139,6 +140,25 @@ export function PreferencesModal({
                   </button>
                   <button className="pref-button" onClick={onImportBackup}>
                     {strings.import}
+                  </button>
+                </div>
+              </section>
+
+              <section className="pref-section">
+                <span className="pref-label">{strings.support}</span>
+                <p className="pref-help">{strings.supportText}</p>
+                <div className="pref-buttons">
+                  <button
+                    className="pref-button"
+                    onClick={() => openExternal(KOFI_URL)}
+                  >
+                    ☕ Ko-fi
+                  </button>
+                  <button
+                    className="pref-button"
+                    onClick={() => openExternal(PAYPAL_URL)}
+                  >
+                    PayPal
                   </button>
                 </div>
               </section>

@@ -97,6 +97,8 @@ export const es: Strings = {
     syncing: "Sincronizando…",
     connected: "Conectado",
     lastSync: "última sync",
+    support: "Apoyar el proyecto",
+    supportText: "Procrastinotes es gratis. Si te sirve, invitame un café.",
     themes: {
       auto: "Automático",
       light: "Claro",
@@ -106,6 +108,11 @@ export const es: Strings = {
       en: "English",
       es: "Español",
     },
+  },
+  support: {
+    toastTitle: "¿Te sirve Procrastinotes?",
+    toastBody: "Es gratis. Si querés, podés invitarme un café.",
+    dismiss: "No mostrar de nuevo",
   },
   command: {
     placeholder: "Buscar páginas o ejecutar un comando…",
